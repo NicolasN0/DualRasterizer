@@ -1,0 +1,485 @@
+#include "pch.h"
+#include "Renderer.h"
+
+#include "Effect.h"
+#include "Material.h"
+#include "Utils.h"
+
+namespace dae {
+
+	Renderer::Renderer(SDL_Window* pWindow) :
+		m_pWindow(pWindow)
+	{
+		//Initialize
+		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
+
+		//Initialize DirectX pipeline
+		const HRESULT result = InitializeDirectX();
+		if (result == S_OK)
+		{
+			m_IsInitialized = true;
+			std::cout << "DirectX is initialized and ready!\n";
+		}
+		else
+		{
+			std::cout << "DirectX initialization failed!\n";
+		}
+
+
+		
+		std::vector<Vertex_PosCol>vertices{};
+
+		std::vector<uint32_t> indices{};
+
+
+		m_pTexture = Texture::LoadFromFile("Resources/vehicle_diffuse.png", m_pDevice);
+		m_pTextureGloss = Texture::LoadFromFile("Resources/vehicle_gloss.png", m_pDevice);
+		m_pTextureNormal = Texture::LoadFromFile("Resources/vehicle_normal.png", m_pDevice);
+		m_pTextureSpecular = Texture::LoadFromFile("Resources/vehicle_specular.png", m_pDevice);
+		Utils::ParseOBJ("Resources/vehicle.obj",
+			vertices,
+			indices
+		);
+		for (Vertex_PosCol& vert : vertices) {
+			vert.Color = { 1,1,1 };
+		}
+
+		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
+
+		m_TransMatrix = Matrix::CreateTranslation(0, 0, 0);
+		m_RotMatrix = Matrix::CreateRotationZ(0);
+		m_ScaleMatrix = Matrix::CreateScale(1, 1, 1);
+		m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+
+		m_pMesh->m_pEffect->SetMaps(m_pTexture, m_pTextureSpecular, m_pTextureNormal, m_pTextureGloss);
+
+
+		std::vector<Vertex_PosCol>vertices2{};
+
+		std::vector<uint32_t> indices2{};
+
+
+
+		const float screenWidth{ static_cast<float>(m_Width) };
+		const float screenHeight{ static_cast<float>(m_Height) };
+
+
+		m_pCamera = new Camera(Vector3{ 0.f, 0.f, -50.f }, 45.f);
+		m_pCamera->aspectRatio = screenWidth / screenHeight;
+		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+
+		m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
+	
+	}
+
+	Renderer::~Renderer()
+	{
+		
+	}
+
+	void Renderer::Update(const Timer* pTimer)
+	{
+		m_Rot = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
+		const float screenWidth{ static_cast<float>(m_Width) };
+		const float screenHeight{ static_cast<float>(m_Height) };
+		m_pCamera->aspectRatio = screenWidth / screenHeight;
+		m_pCamera->Update(pTimer);
+
+		m_RotMatrix = Matrix::CreateRotationY(m_Rot);
+		m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+		m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
+	}
+
+
+	void Renderer::Render() const
+	{
+
+		RenderHardware();
+
+		//RenderSoftware();
+
+	}
+
+	
+
+	HRESULT Renderer::InitializeDirectX()
+	{
+		//1. Create Device & DeviceContext
+		//=====
+		D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
+		uint32_t createDeviceFlags = 0;
+#if defined(DEBUG) || defined(_DEBUG)
+		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+		HRESULT result = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, 0, createDeviceFlags, &featureLevel, 1, D3D11_SDK_VERSION, &m_pDevice, nullptr, &m_pDeviceContext);
+
+
+		if (FAILED(result))
+			return result;
+
+		//Create DXGI factory
+		IDXGIFactory1* pDxgiFactory{};
+		result = CreateDXGIFactory1(__uuidof(IDXGIFactory1), reinterpret_cast<void**>(&pDxgiFactory));
+		if (FAILED(result))
+			return result;
+		//2. Create Swapchain
+		//=====
+		DXGI_SWAP_CHAIN_DESC swapChainDesc{};
+		swapChainDesc.BufferDesc.Width = m_Width;
+		swapChainDesc.BufferDesc.Height = m_Height;
+		swapChainDesc.BufferDesc.RefreshRate.Numerator = 1;
+		swapChainDesc.BufferDesc.RefreshRate.Denominator = 60;
+		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		swapChainDesc.SampleDesc.Count = 1;
+		swapChainDesc.SampleDesc.Quality = 0;
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		swapChainDesc.BufferCount = 1;
+		swapChainDesc.Windowed = true;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.Flags = 0;
+		//Get the handle (HWND) from the SDL Backbuffer
+		SDL_SysWMinfo sysWMinfo{};
+		SDL_VERSION(&sysWMinfo.version)
+			SDL_GetWindowWMInfo(m_pWindow, &sysWMinfo);
+		swapChainDesc.OutputWindow = sysWMinfo.info.win.window;
+		//Create SwapChain
+		result = pDxgiFactory->CreateSwapChain(m_pDevice, &swapChainDesc, &m_pSwapChain);
+		if (FAILED(result))
+			return result;
+
+		//3. Create DepthStencil (DS) & DepthStencilView (DSV)
+		//Resource
+		D3D11_TEXTURE2D_DESC depthStencilDesc{};
+		depthStencilDesc.Width = m_Width;
+		depthStencilDesc.Height = m_Height;
+		depthStencilDesc.MipLevels = 1;
+		depthStencilDesc.ArraySize = 1;
+		depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		depthStencilDesc.SampleDesc.Count = 1;
+		depthStencilDesc.SampleDesc.Quality = 0;
+		depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		depthStencilDesc.CPUAccessFlags = 0;
+		depthStencilDesc.MiscFlags = 0;
+		//View
+		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+		depthStencilViewDesc.Format = depthStencilDesc.Format;
+		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		depthStencilViewDesc.Texture2D.MipSlice = 0;
+
+		result = m_pDevice->CreateTexture2D(&depthStencilDesc, nullptr, &m_pDepthStencilBuffer);
+		if (FAILED(result))
+			return result;
+		result = m_pDevice->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, &m_pDepthStencilView);
+		if (FAILED(result))
+			return result;
+		//4. Create RenderTarget (RT) & RenderTargetView (RTV)
+		//=====
+
+		//Resources
+		result = m_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&m_pRenderTargetBuffer));
+		if (FAILED(result))
+			return result;
+
+		//view
+		result = m_pDevice->CreateRenderTargetView(m_pRenderTargetBuffer, nullptr, &m_PRenderTargetView);
+		if (FAILED(result))
+			return result;
+
+		//5. Bind RTV & DSV to Ouput Merger Stage
+		//=====
+		m_pDeviceContext->OMSetRenderTargets(1, &m_PRenderTargetView, m_pDepthStencilView);
+
+		//6. Set Viewport
+		//=====
+		D3D11_VIEWPORT viewport{};
+		viewport.Width = static_cast<float>(m_Width);
+		viewport.Height = static_cast<float>(m_Height);
+		viewport.TopLeftX = 0.f;
+		viewport.TopLeftY = 0.f;
+		viewport.MinDepth = 0.f;
+		viewport.MaxDepth = 1.f;
+		m_pDeviceContext->RSSetViewports(1, &viewport);
+		//return S_FALSE;
+
+		//here?
+		pDxgiFactory->Release();
+
+		return result;
+	}
+
+
+	void Renderer::RenderSoftware() const
+	{
+		SDL_LockSurface(m_pBackBuffer);
+
+		//RENDER LOGIC
+
+		//ResetBuffers
+		int size{ m_Width * m_Height };
+	
+		for (int i{ 0 }; i < size; i++)
+		{
+			m_ColorBuffer[i] = colors::Black;
+		}
+	
+		for (int i{ 0 }; i < size; i++)
+		{
+			m_pDepthBufferPixels[i] = FLT_MAX;
+		}
+
+		SDL_FillRect(m_pBackBuffer, NULL, 0x000000);
+		
+
+	
+		for (int i{}; i < m_pMesh->indices.size(); i += 3)
+		{
+			std::vector<Vertex_PosCol> triangle{ m_pMesh->vertices[m_pMesh->indices[i]],m_pMesh->vertices[m_pMesh->indices[i + 1]],m_pMesh->vertices[m_pMesh->indices[i + 2]] };
+
+			std::vector<Vertex_PosColOut> totalVertices;
+			VertexTransformationFunction(triangle, totalVertices, m_pMesh->m_WorldMatrix);
+
+			RenderTriangle(totalVertices);
+		}
+
+		//@END
+		//Update SDL Surface
+		SDL_UnlockSurface(m_pBackBuffer);
+		SDL_BlitSurface(m_pBackBuffer, 0, m_pFrontBuffer, 0);
+		SDL_UpdateWindowSurface(m_pWindow);
+	}
+
+
+
+
+	void dae::Renderer::RenderTriangle(std::vector<Vertex_PosColOut> newTriangle) const
+	{
+		Vector2 a = Vector2{ newTriangle[1].Pos.x,newTriangle[1].Pos.y } - Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y };
+		Vector2 b = Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y } - Vector2{ newTriangle[1].Pos.x,newTriangle[1].Pos.y };
+		Vector2 c = Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y } - Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y };
+
+		Vector2 triangleV1 = { newTriangle[0].Pos.x,newTriangle[0].Pos.y };
+		Vector2 triangleV2 = { newTriangle[1].Pos.x,newTriangle[1].Pos.y };
+		Vector2 triangleV3 = { newTriangle[2].Pos.x,newTriangle[2].Pos.y };
+
+		Vector2 edge = Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y } - Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y };
+		float totalArea = Vector2::Cross(a, edge);
+
+
+		float minX = std::min(std::min(triangleV1.x, triangleV2.x), triangleV3.x);
+		float minY = std::min(std::min(triangleV1.y, triangleV2.y), triangleV3.y);
+		float maxX = std::max(std::max(triangleV1.x, triangleV2.x), triangleV3.x);
+		float maxY = std::max(std::max(triangleV1.y, triangleV2.y), triangleV3.y);
+
+		if (
+			((minX >= 0) && (maxX <= (m_Width - 1))) &&
+			((minY >= 0) && (maxY <= (m_Height - 1)))) {
+			for (int px{ static_cast<int>(minX) }; px < std::ceil(maxX); ++px)
+			{
+				for (int py{ static_cast<int>(minY) }; py < std::ceil(maxY); ++py)
+				{
+					float gradient = px / static_cast<float>(m_Width);
+					gradient += py / static_cast<float>(m_Width);
+					gradient /= 2.0f;
+
+
+					Vector2 p{ float(px),float(py) };
+
+					Vector2 pointToSide{ p - triangleV2 };
+					float signedArea1{ Vector2::Cross(b, pointToSide) };
+
+					pointToSide = p - triangleV3;
+					float signedArea2{ Vector2::Cross(c, pointToSide) };
+
+					pointToSide = p - triangleV1;
+					float signedArea3{ Vector2::Cross(a, pointToSide) };
+
+					float W1 = signedArea1 / totalArea;
+					float W2 = signedArea2 / totalArea;
+					float W3 = signedArea3 / totalArea;
+
+
+					int curPixel = px + (py * m_Width);
+					ColorRGB finalColor{};
+					
+
+					if (W1 > 0.f && W2 > 0.f && W3 > 0.f) {
+
+						//depth test
+						float interpolatedDepth{ 1 / ((1 / newTriangle[0].Pos.z) * W1 + (1 / newTriangle[1].Pos.z) * W2 + (1 / newTriangle[2].Pos.z) * W3) };
+						if (interpolatedDepth > m_pDepthBufferPixels[curPixel]) {
+							continue;
+						}
+						m_pDepthBufferPixels[curPixel] = interpolatedDepth;
+
+						//Deciding color
+						float interpolatedDepthW{ 1 / ((1 / newTriangle[0].Pos.w) * W1 + (1 / newTriangle[1].Pos.w) * W2 + (1 / newTriangle[2].Pos.w) * W3) };
+						Vector2 interpolatedUV{
+							(((newTriangle[0].Uv / newTriangle[0].Pos.w) * W1) +
+							((newTriangle[1].Uv / newTriangle[1].Pos.w) * W2) +
+							((newTriangle[2].Uv / newTriangle[2].Pos.w) * W3)) * interpolatedDepthW };
+
+						//normal interpolating
+						Vector3 interpolatedNormal{
+							(((newTriangle[0].Normal / newTriangle[0].Pos.w) * W1) +
+							((newTriangle[1].Normal / newTriangle[1].Pos.w) * W2) +
+							((newTriangle[2].Normal / newTriangle[2].Pos.w) * W3)) * interpolatedDepthW };
+
+						//tangent interpolating
+						Vector3 interpolatedTangent{
+							(((newTriangle[0].Tangent / newTriangle[0].Pos.w) * W1) +
+							((newTriangle[1].Tangent / newTriangle[1].Pos.w) * W2) +
+							((newTriangle[2].Tangent / newTriangle[2].Pos.w) * W3)) * interpolatedDepthW };
+
+
+					
+						ColorRGB interpolatedColor{ m_pTexture->Sample(interpolatedUV) };
+
+						//pos interpolated
+						Vector4 interpolatedPos{
+							((newTriangle[0].Pos * W1) +
+							(newTriangle[1].Pos * W2) +
+							(newTriangle[2].Pos * W3)) * interpolatedDepthW
+						};
+
+						//interpolatedViewDirection;
+						Vector3 interpolatedViewDir
+						{
+							(((newTriangle[0].viewDirection / newTriangle[0].Pos.w) * W1) +
+							((newTriangle[1].viewDirection / newTriangle[1].Pos.w) * W2) +
+							((newTriangle[2].viewDirection / newTriangle[2].Pos.w) * W3)) * interpolatedDepthW
+						};
+					
+						Vector3 binormal = Vector3::Cross(interpolatedNormal, interpolatedTangent);
+						Matrix tangentSpaceAxis = Matrix{ interpolatedTangent,binormal,interpolatedNormal,Vector3::Zero };
+						//Sample from normal map like color (slides say sampled in 255 but already sampled in 0-1 here?)
+
+
+						ColorRGB interpolatedNormalMap{ m_pTextureNormal->Sample(interpolatedUV) };
+						Vector3 normalVec{ interpolatedNormalMap.r,interpolatedNormalMap.g,interpolatedNormalMap.b };
+						//multiply with matrix
+						normalVec = { 2.f * normalVec.x - 1.f, 2.f * normalVec.y - 1.f, 2.f * normalVec.z - 1.f };
+						normalVec = tangentSpaceAxis.TransformVector(normalVec);
+						normalVec /= 255.f;
+					
+
+
+						Vertex_PosColOut interpolatedV = { interpolatedPos,Vector3(interpolatedColor.r,interpolatedColor.g,interpolatedColor.b),interpolatedUV,m_HasNormalMap ? normalVec.Normalized() : interpolatedNormal,interpolatedTangent,interpolatedViewDir };
+
+
+						//Get Specular and gloss from maps
+						ColorRGB glos = m_pTextureGloss->Sample(interpolatedUV);
+						ColorRGB spec = m_pTextureSpecular->Sample(interpolatedUV);
+						Vector3 glosVec{ glos.r,glos.g,glos.b };
+						Vector3 SpecVec{ spec.r,spec.g,spec.b };
+
+
+						float glosMag = glosVec.Magnitude();
+						float specMag = SpecVec.Magnitude();
+						float shininess{ 25 };
+
+						//Vertex_Out interpolatedV = { interpolatedPos,interpolatedColor,interpolatedUV,interpolatedNormal,interpolatedTangent,interpolatedViewDir };
+						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specMag * shininess, glosMag * shininess);
+
+					}
+
+					finalColor = m_ColorBuffer[curPixel];
+					//Update Color in Buffer
+					finalColor.MaxToOne();
+
+					m_pBackBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBackBuffer->format,
+						static_cast<uint8_t>(finalColor.r * 255),
+						static_cast<uint8_t>(finalColor.g * 255),
+						static_cast<uint8_t>(finalColor.b * 255));
+				}
+			}
+		}
+	}
+	void Renderer::VertexTransformationFunction(const std::vector<Vertex_PosCol>& vertices_in, std::vector<Vertex_PosColOut>& vertices_out, Matrix worldMatrix) const
+	{
+		vertices_out.clear();
+		float aspectRatio = { m_Width / static_cast<float>(m_Height) };
+		//m_Camera.viewMatrix;
+		Matrix end = worldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
+		for (int i{}; i < vertices_in.size(); i++)
+		{
+			Vertex_PosCol pWorld{};
+			Vertex_PosColOut p{};
+			//To view Space
+			//Multiply all the vertices with the m_camera.viewMatrix(which is actualy the onb inverse)
+			pWorld = vertices_in[i];
+			Vector4 pos{ pWorld.Pos.x,pWorld.Pos.y,pWorld.Pos.z,1 };
+			Vertex_PosColOut pView{};
+
+			pView.Pos = end.TransformPoint(pos);
+
+
+			//Perspective Divide
+			p.Pos.x = pView.Pos.x / pView.Pos.w;
+			p.Pos.y = pView.Pos.y / pView.Pos.w;
+			p.Pos.z = pView.Pos.z / pView.Pos.w;
+			p.Pos.w = pView.Pos.w;
+
+		
+			p.Pos.x = ((p.Pos.x + 1) / 2) * m_Width;
+			p.Pos.y = ((1 - p.Pos.y) / 2) * m_Height;
+			p.Color = vertices_in[i].Color;
+			p.Uv = vertices_in[i].Uv;
+		
+
+			p.Normal = worldMatrix.TransformVector(vertices_in[i].Normal);
+			p.Tangent = worldMatrix.TransformVector(vertices_in[i].Tangent);
+
+			//calculateViewDirectionToo
+			p.viewDirection = Vector3{ m_pCamera->origin - p.Pos.GetXYZ() };
+			vertices_out.push_back(p);
+		}
+	}
+
+
+	void Renderer::RenderHardware() const
+	{
+		if (!m_IsInitialized)
+			return;
+		//1. CLEAR RTV & DSV
+		ColorRGB clearColor = ColorRGB{ 0.f,0.f,0.3f };
+		m_pDeviceContext->ClearRenderTargetView(m_PRenderTargetView, &clearColor.r);
+		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+
+		//2. SET PIPELINE + INVOKE DRAWCALLS (= RENDER)
+		//...
+		m_pMesh->Render(m_pDeviceContext);
+
+
+		//3. PRESENT BACKBUFFER (SWAP)
+		m_pSwapChain->Present(0, 0);
+	}
+
+	ColorRGB Renderer::PixelShading(const Vertex_PosColOut& v, float spec, float glos) const
+	{
+		constexpr float kd{ 7.f }; // = diffuse reflectance = diffuse specularity
+		constexpr float shininess{ 25.f };
+		Vector3 lightDirection = { .577f, -.577f, .577f };
+		//Lambert
+		float ObservedArea{ Vector3::Dot(v.Normal.Normalized(), -lightDirection.Normalized()) };
+		ObservedArea = Clamp(ObservedArea, 0.f, 1.f);
+
+
+
+
+		Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+		const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
+		const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+		const ColorRGB phong{ diffuse + specular };
+		return phong;
+
+	}
+}
+
+
+
+
