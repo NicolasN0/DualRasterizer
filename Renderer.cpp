@@ -12,7 +12,24 @@ namespace dae {
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
-
+		//Software
+		//Create Buffers
+		m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
+		m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
+		m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
+		m_pDepthBufferPixels = new float[m_Width * m_Height];
+		int size{ m_Width * m_Height };
+		m_ColorBuffer = new ColorRGB[size];
+		for (int i{ 0 }; i < size; i++)
+		{
+			m_ColorBuffer[i] = colors::Gray;
+		}
+		m_pDepthBufferPixels = new float[size];
+		for (int i{ 0 }; i < size; i++)
+		{
+			m_pDepthBufferPixels[i] = FLT_MAX;
+		}
+		//Hardware
 		//Initialize DirectX pipeline
 		const HRESULT result = InitializeDirectX();
 		if (result == S_OK)
@@ -26,7 +43,7 @@ namespace dae {
 		}
 
 
-		
+		//General
 		std::vector<Vertex_PosCol>vertices{};
 
 		std::vector<uint32_t> indices{};
@@ -45,7 +62,8 @@ namespace dae {
 		}
 
 		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
-
+		m_pMesh->indices = indices; // for software
+		m_pMesh->vertices = vertices; // for software
 		m_TransMatrix = Matrix::CreateTranslation(0, 0, 0);
 		m_RotMatrix = Matrix::CreateRotationZ(0);
 		m_ScaleMatrix = Matrix::CreateScale(1, 1, 1);
@@ -95,9 +113,9 @@ namespace dae {
 	void Renderer::Render() const
 	{
 
-		RenderHardware();
+		//RenderHardware();
 
-		//RenderSoftware();
+		RenderSoftware();
 
 	}
 

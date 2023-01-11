@@ -40,10 +40,12 @@ namespace dae
 			SRVDesc.Texture2D.MipLevels = 1;
 
 			hr = m_pDevice->CreateShaderResourceView(m_pResource, &SRVDesc, &m_pSRV);
-			if (SUCCEEDED(hr)) {
+			//commented for software
+
+			/*if (SUCCEEDED(hr)) {
 				SDL_FreeSurface(m_pSurface);
 				m_pSurface = nullptr;
-			}
+			}*/
 		}
 	}
 
