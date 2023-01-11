@@ -7,6 +7,14 @@ struct SDL_Surface;
 #include "Texture.h"
 namespace dae
 {
+    enum class ShadingMode {
+        ObservedArea,
+        Diffuse,
+        Specular,
+        Combined
+    };
+
+
 	class Renderer final
 	{
 	public:
@@ -20,7 +28,9 @@ namespace dae
 
 		void Update(const Timer* pTimer);
 		void Render() const;
-
+        void CycleTecnhique();
+        void CylceShadingMode();
+        void ToggleRotation() { m_isRotating = !m_isRotating; }
 	private:
         SDL_Window* m_pWindow{};
 
@@ -29,7 +39,8 @@ namespace dae
         float m_Rot{ 0 };
 
         bool m_IsInitialized{ false };
-
+        bool m_IsUsingHardware{};
+        ShadingMode m_ShadingMode{};
         Camera* m_pCamera{ nullptr };
 
         ID3D11Device* m_pDevice{ nullptr };
@@ -55,9 +66,9 @@ namespace dae
 		HRESULT InitializeDirectX();
         void RenderHardware() const;
         //Software
-        bool m_HasRotation;
+        bool m_isRotating{true};
         bool m_HasNormalMap;
-        void ToggleRotation() { m_HasRotation = !m_HasRotation; }
+       
         void ToggleNormalMap() { m_HasNormalMap = !m_HasNormalMap; }
 
         SDL_Surface* m_pFrontBuffer{ nullptr };

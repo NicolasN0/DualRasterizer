@@ -97,26 +97,44 @@ namespace dae {
 
 	void Renderer::Update(const Timer* pTimer)
 	{
-		m_Rot = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
-		const float screenWidth{ static_cast<float>(m_Width) };
-		const float screenHeight{ static_cast<float>(m_Height) };
-		m_pCamera->aspectRatio = screenWidth / screenHeight;
-		m_pCamera->Update(pTimer);
+		if(m_isRotating)
+		{
+			m_Rot = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
+			const float screenWidth{ static_cast<float>(m_Width) };
+			const float screenHeight{ static_cast<float>(m_Height) };
+			m_pCamera->aspectRatio = screenWidth / screenHeight;
+			m_pCamera->Update(pTimer);
 
-		m_RotMatrix = Matrix::CreateRotationY(m_Rot);
-		m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
-		m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
+			m_RotMatrix = Matrix::CreateRotationY(m_Rot);
+			m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+			m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+			m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
+			
+		}
 	}
 
 
 	void Renderer::Render() const
 	{
+		if(m_IsUsingHardware)
+		{
+			RenderHardware();
+		} else
+		{
+			RenderSoftware();
+		}
+	}
 
-		//RenderHardware();
+	void Renderer::CycleTecnhique()
+	{
+		m_IsUsingHardware = !m_IsUsingHardware;
+	}
 
-		RenderSoftware();
-
+	void Renderer::CylceShadingMode()
+	{
+		m_ShadingMode == ShadingMode::Combined ?
+			m_ShadingMode = ShadingMode(0) :
+			m_ShadingMode = ShadingMode(static_cast<int>(m_ShadingMode) + 1);
 	}
 
 	
@@ -489,11 +507,39 @@ namespace dae {
 
 
 
-		Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
-		const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
-		const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
-		const ColorRGB phong{ diffuse + specular };
-		return phong;
+		switch (m_ShadingMode)
+		{
+		case ShadingMode::ObservedArea: {
+			return ColorRGB{ ObservedArea,ObservedArea,ObservedArea };
+		}
+
+		case ShadingMode::Diffuse: {
+			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
+			return diffuse;
+		}
+
+		case ShadingMode::Specular: {
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			return specular;
+		}
+
+		case ShadingMode::Combined: {
+			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			const ColorRGB phong{ diffuse + specular };
+			return phong;
+		}
+
+		default: {
+			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			const ColorRGB phong{ diffuse + specular };
+			return phong;
+		}
+		}
 
 	}
 }
