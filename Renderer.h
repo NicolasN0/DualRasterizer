@@ -39,7 +39,7 @@ namespace dae
         float m_Rot{ 0 };
 
         bool m_IsInitialized{ false };
-        bool m_IsUsingHardware{};
+        bool m_IsUsingHardware{true};
         ShadingMode m_ShadingMode{};
         Camera* m_pCamera{ nullptr };
 
@@ -51,12 +51,14 @@ namespace dae
         ID3D11Resource* m_pRenderTargetBuffer{ nullptr };
         ID3D11RenderTargetView* m_PRenderTargetView{ nullptr };
 
+        Mesh* m_pCombustionMesh{ nullptr };
         Mesh* m_pMesh{ nullptr };
         Texture* m_pTexture{ nullptr };
         Texture* m_pTextureGloss{ nullptr };
         Texture* m_pTextureNormal{ nullptr };
         Texture* m_pTextureSpecular{ nullptr };
 
+        Texture* m_pTextureFire{ nullptr };
 
         Matrix m_TransMatrix{};
         Matrix m_RotMatrix{};

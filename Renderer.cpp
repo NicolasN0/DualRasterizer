@@ -44,6 +44,7 @@ namespace dae {
 
 
 		//General
+		//Vehicle
 		std::vector<Vertex_PosCol>vertices{};
 
 		std::vector<uint32_t> indices{};
@@ -72,10 +73,25 @@ namespace dae {
 		m_pMesh->m_pEffect->SetMaps(m_pTexture, m_pTextureSpecular, m_pTextureNormal, m_pTextureGloss);
 
 
+		//Fire
+
 		std::vector<Vertex_PosCol>vertices2{};
 
 		std::vector<uint32_t> indices2{};
+		m_pTextureFire = Texture::LoadFromFile("Resources/fireFX_diffuse.png", m_pDevice);
+		Utils::ParseOBJ("Resources/fireFX.obj",
+			vertices2,
+			indices2
+		);
+		for (Vertex_PosCol& vert2 : vertices2) {
+			vert2.Color = { 1,1,1 };
+		}
+		m_pCombustionMesh = new Mesh{ m_pDevice, vertices2, indices2 };
+		m_pCombustionMesh->indices = indices2; // for software
+		m_pCombustionMesh->vertices = vertices2;
 
+		m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+		m_pCombustionMesh->m_pEffect->SetMaps(m_pTextureFire);
 
 
 		const float screenWidth{ static_cast<float>(m_Width) };
@@ -86,8 +102,12 @@ namespace dae {
 		m_pCamera->aspectRatio = screenWidth / screenHeight;
 		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 
+		//Vehicle
 		m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
-	
+
+		//Fire
+		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pCombustionMesh->m_pEffect->ChangeEffect("FlatTechnique");
 	}
 
 	Renderer::~Renderer()
@@ -107,9 +127,11 @@ namespace dae {
 
 			m_RotMatrix = Matrix::CreateRotationY(m_Rot);
 			m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+			m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 			m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 			m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
-			
+			m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+
 		}
 	}
 
@@ -489,7 +511,7 @@ namespace dae {
 		//2. SET PIPELINE + INVOKE DRAWCALLS (= RENDER)
 		//...
 		m_pMesh->Render(m_pDeviceContext);
-
+		m_pCombustionMesh->Render(m_pDeviceContext);
 
 		//3. PRESENT BACKBUFFER (SWAP)
 		m_pSwapChain->Present(0, 0);
