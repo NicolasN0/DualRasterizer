@@ -70,6 +70,8 @@ int main(int argc, char* args[])
 					pRenderer->ToggleNormalMap();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
 					pRenderer->CycleState();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F10)
+					pRenderer->ToggleUniformColor();
 				break;
 			default: ;
 			}

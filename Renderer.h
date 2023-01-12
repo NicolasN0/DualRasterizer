@@ -49,6 +49,7 @@ namespace dae
         void ToggleNormalMap() { m_HasNormalMap = !m_HasNormalMap; }
         void CycleState();
         void CycleSampler();
+        void ToggleUniformColor();
 	private:
         SDL_Window* m_pWindow{};
 
@@ -60,10 +61,17 @@ namespace dae
         bool m_IsUsingHardware{true};
         bool m_IsShowingFire{ true };
 
+        bool m_IsUniformColor{};
+
         ShadingMode m_ShadingMode{};
         SamplerState m_SamplerState{};
         RasterState m_RasterState{};
         Camera* m_pCamera{ nullptr };
+
+        //ColorRGB m_CurColor;
+        ColorRGB m_HardwareCol{0.39f,0.59f,0.93f};
+        ColorRGB m_SoftCol{0.39f,0.39f,0.39f};
+        ColorRGB m_UniformCol{.1f,.1f,.1f};
 
         ID3D11Device* m_pDevice{ nullptr };
         ID3D11DeviceContext* m_pDeviceContext{ nullptr };

@@ -167,6 +167,8 @@ namespace dae {
 
 	void Renderer::Update(const Timer* pTimer)
 	{
+
+
 		if(m_isRotating)
 		{
 			m_Rot = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
@@ -253,6 +255,11 @@ namespace dae {
 			break;
 		}
 
+	}
+
+	void Renderer::ToggleUniformColor()
+	{
+		m_IsUniformColor = !m_IsUniformColor;
 	}
 
 	
@@ -489,7 +496,14 @@ namespace dae {
 	
 		for (int i{ 0 }; i < size; i++)
 		{
-			m_ColorBuffer[i] = colors::Black;
+		/*	m_ColorBuffer[i] = colors::Black;*/
+			if(m_IsUniformColor)
+			{
+				m_ColorBuffer[i] = m_UniformCol;
+			} else
+			{
+				m_ColorBuffer[i] = m_SoftCol;
+			}
 		}
 	
 		for (int i{ 0 }; i < size; i++)
@@ -498,7 +512,16 @@ namespace dae {
 		}
 
 		SDL_FillRect(m_pBackBuffer, NULL, 0x000000);
-		
+		if(m_IsUniformColor)
+		{
+			SDL_FillRect(m_pBackBuffer, NULL, 0x191919);
+
+		} else
+		{
+			SDL_FillRect(m_pBackBuffer, NULL, 0x636363);
+
+		}
+
 
 	
 		for (int i{}; i < m_pMesh->indices.size(); i += 3)
@@ -711,7 +734,16 @@ namespace dae {
 		if (!m_IsInitialized)
 			return;
 		//1. CLEAR RTV & DSV
-		ColorRGB clearColor = ColorRGB{ 0.f,0.f,0.3f };
+		
+	/*	ColorRGB clearColor = ColorRGB{ 0.39f,0.59f,0.93f };*/
+		ColorRGB clearColor;
+		if(m_IsUniformColor)
+		{
+			clearColor = m_UniformCol;
+		} else
+		{
+			clearColor = m_HardwareCol;
+		}
 		m_pDeviceContext->ClearRenderTargetView(m_PRenderTargetView, &clearColor.r);
 		m_pDeviceContext->ClearDepthStencilView(m_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 
