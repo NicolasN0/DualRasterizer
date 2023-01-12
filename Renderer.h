@@ -14,6 +14,20 @@ namespace dae
         Combined
     };
 
+    enum class RasterState
+    {
+	    None,
+        Front,
+        Back
+    };
+
+    enum class SamplerState
+    {
+        Point,
+	    Linear,
+        Anisotropic
+
+    };
 
 	class Renderer final
 	{
@@ -32,6 +46,9 @@ namespace dae
         void CylceShadingMode();
         void ToggleRotation() { m_isRotating = !m_isRotating; }
         void ToggleFireMesh();
+        void ToggleNormalMap() { m_HasNormalMap = !m_HasNormalMap; }
+        void CycleState();
+        void CycleSampler();
 	private:
         SDL_Window* m_pWindow{};
 
@@ -42,7 +59,10 @@ namespace dae
         bool m_IsInitialized{ false };
         bool m_IsUsingHardware{true};
         bool m_IsShowingFire{ true };
+
         ShadingMode m_ShadingMode{};
+        SamplerState m_SamplerState{};
+        RasterState m_RasterState{};
         Camera* m_pCamera{ nullptr };
 
         ID3D11Device* m_pDevice{ nullptr };
@@ -52,6 +72,15 @@ namespace dae
         ID3D11DepthStencilView* m_pDepthStencilView{ nullptr };
         ID3D11Resource* m_pRenderTargetBuffer{ nullptr };
         ID3D11RenderTargetView* m_PRenderTargetView{ nullptr };
+
+        ID3D11RasterizerState* m_pDefaultState{nullptr};
+        ID3D11RasterizerState* m_pFrontCullState{ nullptr };
+        ID3D11RasterizerState* m_pBackCullState{ nullptr };
+
+        ID3D11SamplerState* m_pPointSample{ nullptr };
+        ID3D11SamplerState* m_pLinearSample{ nullptr };
+        ID3D11SamplerState* m_pAnisotropicSample{ nullptr };
+
 
         Mesh* m_pCombustionMesh{ nullptr };
         Mesh* m_pMesh{ nullptr };
@@ -71,9 +100,8 @@ namespace dae
         void RenderHardware() const;
         //Software
         bool m_isRotating{true};
-        bool m_HasNormalMap;
+        bool m_HasNormalMap{true};
        
-        void ToggleNormalMap() { m_HasNormalMap = !m_HasNormalMap; }
 
         SDL_Surface* m_pFrontBuffer{ nullptr };
         SDL_Surface* m_pBackBuffer{ nullptr };

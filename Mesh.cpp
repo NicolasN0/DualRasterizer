@@ -85,6 +85,22 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices,std::vecto
 
 }
 
+Mesh::~Mesh()
+{
+	m_pTechnique = nullptr;
+	m_pVertexBuffer->Release();
+	m_pVertexBuffer = nullptr;
+	m_pIndexBuffer->Release();
+	m_pIndexBuffer = nullptr;
+	m_pInputLayout->Release();
+	m_pInputLayout = nullptr;
+
+	if (m_pEffect) {
+		delete m_pEffect;
+		m_pEffect = nullptr;
+	}
+}
+
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
 	//1. set primitive topology
@@ -112,32 +128,32 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 }
 
 
-void Mesh::CycleTechnique()
-{
-	m_Technique == Technique::Anisotropic ?
-		m_Technique = Technique(0) :
-		m_Technique = Technique(static_cast<int>(m_Technique) + 1);
-
-
-	switch (m_Technique)
-	{
-	case Technique::Point:
-		m_pEffect->ChangeEffect("DefaultTechnique");
-		break;
-	case Technique::Linear:
-		m_pEffect->ChangeEffect("LinearTechnique");
-		break;
-	case Technique::Anisotropic:
-		m_pEffect->ChangeEffect("AniTechnique");
-		break;
-	case Technique::Flat:
-		m_pEffect->ChangeEffect("FlatTechnique");
-		break;
-	default:
-		break;
-	}
-	m_pTechnique = m_pEffect->GetTechnique();
-}
+//void Mesh::CycleTechnique()
+//{
+//	m_Technique == Technique::Anisotropic ?
+//		m_Technique = Technique(0) :
+//		m_Technique = Technique(static_cast<int>(m_Technique) + 1);
+//
+//
+//	switch (m_Technique)
+//	{
+//	case Technique::Point:
+//		m_pEffect->ChangeEffect("DefaultTechnique");
+//		break;
+//	case Technique::Linear:
+//		m_pEffect->ChangeEffect("LinearTechnique");
+//		break;
+//	case Technique::Anisotropic:
+//		m_pEffect->ChangeEffect("AniTechnique");
+//		break;
+//	case Technique::Flat:
+//		m_pEffect->ChangeEffect("FlatTechnique");
+//		break;
+//	default:
+//		break;
+//	}
+//	m_pTechnique = m_pEffect->GetTechnique();
+//}
 
 void Mesh::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos)
 {

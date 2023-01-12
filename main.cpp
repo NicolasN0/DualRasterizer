@@ -60,10 +60,16 @@ int main(int argc, char* args[])
 					pRenderer->CycleTecnhique();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F2)
 					pRenderer->ToggleRotation();
-				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
-					pRenderer->CylceShadingMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
 					pRenderer->ToggleFireMesh();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F4)
+					pRenderer->CycleSampler();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
+					pRenderer->CylceShadingMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
+					pRenderer->ToggleNormalMap();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
+					pRenderer->CycleState();
 				break;
 			default: ;
 			}

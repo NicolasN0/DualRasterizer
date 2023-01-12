@@ -49,7 +49,7 @@ public:
     void SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos);
     void SetWorldMatrix(dae::Matrix matrix) { m_WorldMatrix = matrix; };
     void Render(ID3D11DeviceContext* pDeviceContext);
-    void CycleTechnique();
+    //void CycleTechnique();
 
     Effect* m_pEffect{ nullptr };
     dae::Matrix m_WorldMatrix{};

@@ -47,15 +47,16 @@ Effect::Effect(ID3D11Device* device, const std::wstring& assetFile)
 		std::wcout << L"m_pOnbMatrixVariable is not valid! \n";
 	}
 
+	//Samplers
+	m_pSampleVar = m_pEffect->GetVariableByName("gSamp")->AsSampler();
+	if (!m_pSampleVar->IsValid()) {
+		std::wcout << L"m_pSampleVar is not valid! \n";
+	}
 }
 
 Effect::~Effect()
 {
-	m_pEffect->Release();
-	m_pEffect = nullptr;
-
-	m_pTechnique->Release();
-	m_pTechnique = nullptr;
+	
 
 	m_pDiffuseMapVariable->Release();
 	m_pDiffuseMapVariable = nullptr;
@@ -90,6 +91,12 @@ Effect::~Effect()
 	m_pEffect->GetTechniqueByName("LinearTechnique")->Release();
 	m_pEffect->GetTechniqueByName("AniTechnique")->Release();
 	m_pEffect->GetTechniqueByName("FlatTechnique")->Release();
+
+	m_pTechnique->Release();
+	m_pTechnique = nullptr;
+
+	m_pEffect->Release();
+	m_pEffect = nullptr;
 }
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile)
@@ -163,23 +170,28 @@ void Effect::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix
 
 void Effect::SetMaps(dae::Texture* pDiffuseTexture, dae::Texture* pSpecularMap, dae::Texture* pNormalMap, dae::Texture* pGlossMap)
 {
-	if (m_pDiffuseMapVariable) {
+	if (m_pDiffuseMapVariable) 
+	{
 		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
 	}
-	if (m_pSpecularMapVariable) {
+	if (m_pSpecularMapVariable) 
+	{
 		m_pSpecularMapVariable->SetResource(pSpecularMap->GetSRV());
 	}
-	if (m_pNormalMapVariable) {
+	if (m_pNormalMapVariable) 
+	{
 		m_pNormalMapVariable->SetResource(pNormalMap->GetSRV());
 	}
-	if (m_pGlossMapVariable) {
+	if (m_pGlossMapVariable)
+	{
 		m_pGlossMapVariable->SetResource(pGlossMap->GetSRV());
 	}
 }
 
 void Effect::SetMaps(dae::Texture* pDiffuseTexture)
 {
-	if (m_pDiffuseMapVariable) {
+	if (m_pDiffuseMapVariable) 
+	{
 		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
 	}
 	
@@ -187,4 +199,9 @@ void Effect::SetMaps(dae::Texture* pDiffuseTexture)
 void Effect::ChangeEffect(LPCSTR name)
 {
 	m_pTechnique = m_pEffect->GetTechniqueByName(name);
+}
+
+void Effect::SetSampler(ID3D11SamplerState* sampler)
+{
+	m_pSampleVar->SetSampler(0,sampler);
 }

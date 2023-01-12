@@ -17,7 +17,7 @@ namespace dae {
 		m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
 		m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
 		m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
-		m_pDepthBufferPixels = new float[m_Width * m_Height];
+		//m_pDepthBufferPixels = new float[m_Width * m_Height];
 		int size{ m_Width * m_Height };
 		m_ColorBuffer = new ColorRGB[size];
 		for (int i{ 0 }; i < size; i++)
@@ -65,7 +65,7 @@ namespace dae {
 		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
 		m_pMesh->indices = indices; // for software
 		m_pMesh->vertices = vertices; // for software
-		m_TransMatrix = Matrix::CreateTranslation(0, 0, 0);
+		m_TransMatrix = Matrix::CreateTranslation(0, 0, 50);
 		m_RotMatrix = Matrix::CreateRotationZ(0);
 		m_ScaleMatrix = Matrix::CreateScale(1, 1, 1);
 		m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
@@ -98,7 +98,9 @@ namespace dae {
 		const float screenHeight{ static_cast<float>(m_Height) };
 
 
-		m_pCamera = new Camera(Vector3{ 0.f, 0.f, -50.f }, 45.f);
+		//m_pCamera = new Camera(Vector3{ 0.f, 0.f, -50.f }, 45.f);
+		m_pCamera = new Camera(Vector3{ 0.f, 0.f, 0.f }, 45.f);
+
 		m_pCamera->aspectRatio = screenWidth / screenHeight;
 		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 
@@ -112,7 +114,41 @@ namespace dae {
 
 	Renderer::~Renderer()
 	{
-	
+		delete m_pMesh;
+		m_pMesh = nullptr;
+
+		delete m_pCombustionMesh;
+		m_pCombustionMesh = nullptr;
+
+		delete m_pCamera;
+		m_pCamera = nullptr;
+
+		delete m_pTexture;
+		m_pTexture = nullptr;
+		delete m_pTextureGloss;
+		m_pTextureGloss = nullptr;
+		delete m_pTextureNormal;
+		m_pTextureNormal = nullptr;
+		delete m_pTextureSpecular;
+		m_pTextureSpecular = nullptr;
+		delete m_pTextureFire;
+		m_pTextureFire = nullptr;
+
+		delete[] m_pDepthBufferPixels;
+		m_pDepthBufferPixels = nullptr;
+		delete[] m_ColorBuffer;
+		m_ColorBuffer = nullptr;
+
+		m_pBackBufferPixels = nullptr;
+		if (m_pFrontBuffer) {
+			SDL_FreeSurface(m_pFrontBuffer);
+			m_pFrontBuffer = nullptr;
+		}
+		if (m_pBackBuffer) {
+
+			SDL_FreeSurface(m_pBackBuffer);
+			m_pBackBuffer = nullptr;
+		}
 		if (m_pDeviceContext)
 		{
 			m_pDeviceContext->ClearState();
@@ -123,7 +159,8 @@ namespace dae {
 		//delete m_pRenderTargetBuffer;
 		//delete m_pDepthStencilView;
 		//delete m_pDepthStencilBuffer;
-		delete m_pSwapChain;
+		//delete m_pSwapChain;
+		m_pSwapChain->Release();
 		//delete m_pDeviceContext;
 		//delete m_pDevice;
 	}
@@ -175,6 +212,47 @@ namespace dae {
 	void Renderer::ToggleFireMesh()
 	{
 		m_IsShowingFire = !m_IsShowingFire;
+	}
+
+	void Renderer::CycleState()
+	{
+		m_RasterState == RasterState::Back ?
+			m_RasterState = RasterState(0) :
+			m_RasterState = RasterState(static_cast<int>(m_RasterState) + 1);
+
+		switch (m_RasterState)
+		{
+		case RasterState::None:
+			m_pDeviceContext->RSSetState(m_pDefaultState);
+			break;
+		case RasterState::Front:
+			m_pDeviceContext->RSSetState(m_pFrontCullState);
+			break;
+		case RasterState::Back:
+			m_pDeviceContext->RSSetState(m_pBackCullState);
+			break;
+		}
+	}
+
+	void Renderer::CycleSampler()
+	{
+		m_SamplerState == SamplerState::Anisotropic ?
+			m_SamplerState = SamplerState(0) :
+			m_SamplerState = SamplerState(static_cast<int>(m_SamplerState) + 1);
+
+		switch (m_SamplerState)
+		{
+		case SamplerState::Point:
+				m_pMesh->m_pEffect->SetSampler(m_pPointSample);
+			break;
+		case SamplerState::Linear:
+			m_pMesh->m_pEffect->SetSampler(m_pLinearSample);
+			break;
+		case SamplerState::Anisotropic:
+			m_pMesh->m_pEffect->SetSampler(m_pAnisotropicSample);
+			break;
+		}
+
 	}
 
 	
@@ -269,6 +347,117 @@ namespace dae {
 		//5. Bind RTV & DSV to Ouput Merger Stage
 		//=====
 		m_pDeviceContext->OMSetRenderTargets(1, &m_PRenderTargetView, m_pDepthStencilView);
+
+		//Extra Rasterizer States?
+		D3D11_RASTERIZER_DESC defaultCull{};
+		defaultCull.FillMode = D3D11_FILL_SOLID; //?
+		defaultCull.CullMode = D3D11_CULL_NONE;
+		defaultCull.FrontCounterClockwise = false;
+		defaultCull.DepthBias = 0;
+		defaultCull.SlopeScaledDepthBias = 0.0f;
+		defaultCull.DepthBiasClamp = 0.0f;
+		defaultCull.DepthClipEnable = true;
+		defaultCull.ScissorEnable = false;
+		defaultCull.MultisampleEnable = false;
+		defaultCull.AntialiasedLineEnable = false;
+
+		result = m_pDevice->CreateRasterizerState(&defaultCull,&m_pDefaultState);
+		if (FAILED(result))
+			return result;
+		//m_pDeviceContext->RSSetState(m_pDefaultState);
+
+		D3D11_RASTERIZER_DESC frontCull{};
+		frontCull.FillMode = D3D11_FILL_SOLID; //?
+		frontCull.CullMode = D3D11_CULL_FRONT;
+		frontCull.FrontCounterClockwise = false;
+		frontCull.DepthBias = 0;
+		frontCull.SlopeScaledDepthBias = 0.0f;
+		frontCull.DepthBiasClamp = 0.0f;
+		frontCull.DepthClipEnable = true;
+		frontCull.ScissorEnable = false;
+		frontCull.MultisampleEnable = false;
+		frontCull.AntialiasedLineEnable = false;
+
+		result = m_pDevice->CreateRasterizerState(&frontCull, &m_pFrontCullState);
+		if (FAILED(result))
+			return result;
+
+
+		D3D11_RASTERIZER_DESC backCull{};
+		backCull.FillMode = D3D11_FILL_SOLID; 
+		backCull.CullMode = D3D11_CULL_BACK;
+		backCull.FrontCounterClockwise = false;
+		backCull.DepthBias = 0;
+		backCull.SlopeScaledDepthBias = 0.0f;
+		backCull.DepthBiasClamp = 0.0f;
+		backCull.DepthClipEnable = true;
+		backCull.ScissorEnable = false;
+		backCull.MultisampleEnable = false;
+		backCull.AntialiasedLineEnable = false;
+
+		result = m_pDevice->CreateRasterizerState(&backCull, &m_pBackCullState);
+		if (FAILED(result))
+			return result;
+
+
+
+		//Extra Sampler States?
+		D3D11_SAMPLER_DESC PointSamp{};
+		PointSamp.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		PointSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		PointSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		PointSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		PointSamp.MinLOD = -FLT_MAX;
+		PointSamp.MaxLOD = FLT_MAX;
+		PointSamp.MipLODBias = 0.0f;
+		PointSamp.MaxAnisotropy = 1;
+		PointSamp.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		PointSamp.BorderColor[0] = 1.0f;
+		PointSamp.BorderColor[1] = 1.0f;
+		PointSamp.BorderColor[2] = 1.0f;
+		PointSamp.BorderColor[3] = 1.0f;
+		result = m_pDevice->CreateSamplerState(&PointSamp, &m_pPointSample);
+		if (FAILED(result))
+			return result;
+
+
+		D3D11_SAMPLER_DESC linearSamp{};
+		linearSamp.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		linearSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		linearSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		linearSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		linearSamp.MinLOD = -FLT_MAX;
+		linearSamp.MaxLOD = FLT_MAX;
+		linearSamp.MipLODBias = 0.0f;
+		linearSamp.MaxAnisotropy = 1;
+		linearSamp.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		linearSamp.BorderColor[0] = 1.0f;
+		linearSamp.BorderColor[1] = 1.0f;
+		linearSamp.BorderColor[2] = 1.0f;
+		linearSamp.BorderColor[3] = 1.0f;
+		result = m_pDevice->CreateSamplerState(&linearSamp, &m_pLinearSample);
+		if (FAILED(result))
+			return result;
+
+
+		D3D11_SAMPLER_DESC AnisotropicSamp{};
+		AnisotropicSamp.Filter = D3D11_FILTER_ANISOTROPIC;
+		AnisotropicSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		AnisotropicSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		AnisotropicSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+		AnisotropicSamp.MinLOD = -FLT_MAX;
+		AnisotropicSamp.MaxLOD = FLT_MAX;
+		AnisotropicSamp.MipLODBias = 0.0f;
+		AnisotropicSamp.MaxAnisotropy = 1;
+		AnisotropicSamp.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		AnisotropicSamp.BorderColor[0] = 1.0f;
+		AnisotropicSamp.BorderColor[1] = 1.0f;
+		AnisotropicSamp.BorderColor[2] = 1.0f;
+		AnisotropicSamp.BorderColor[3] = 1.0f;
+		result = m_pDevice->CreateSamplerState(&AnisotropicSamp, &m_pAnisotropicSample);
+		if (FAILED(result))
+			return result;
+
 
 		//6. Set Viewport
 		//=====
@@ -586,6 +775,8 @@ namespace dae {
 		}
 
 	}
+
+
 }
 
 

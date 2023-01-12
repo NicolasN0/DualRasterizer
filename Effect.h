@@ -15,6 +15,7 @@ public:
 	void SetMaps(dae::Texture* pDiffuseTexture, dae::Texture* pSpecularMap, dae::Texture* pNormalMap, dae::Texture* pGlossMap);
 	void SetMaps(dae::Texture* pDiffuseTexture);
 	void ChangeEffect(LPCSTR name);
+	void SetSampler(ID3D11SamplerState* sampler);
 private:
 	
 	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable{ nullptr };
@@ -26,5 +27,7 @@ private:
 	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable{ nullptr };
 	ID3DX11EffectMatrixVariable* m_pWorldMatrixVariable{ nullptr };
 	ID3DX11EffectVectorVariable* m_pOnbMatrixVariable{ nullptr };
+
+	ID3DX11EffectSamplerVariable* m_pSampleVar{ nullptr };
 };
 

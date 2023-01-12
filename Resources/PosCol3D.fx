@@ -7,6 +7,8 @@ Texture2D gGlossyMap : GlossyMap;
 Texture2D gSpecularMap : SpecularMap;
 Texture2D gNormalMap : NormalMap;
 
+SamplerState gSamp;
+
 float3 lightDirection = float3(0.577f, -0.577f, 0.577f);
 float diffuseReflectance = 7.f; //kd
 float shininess = 25.f;
@@ -289,7 +291,7 @@ float4 PS1(VS_OUTPUT input) : SV_TARGET
     return output;
 }
 
-//specular
+////specular
 float4 PS2(VS_OUTPUT input) : SV_TARGET
 {
     //maps
@@ -332,7 +334,7 @@ float4 PS4(VS_OUTPUT input) : SV_TARGET
     float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
     float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);
 
-    //Lambert cosine law (is correct)
+    //Lambert cosine law
     float observedArea = saturate(dot(computedNormals, -lightDirection));
     clamp(observedArea, 0, 1);
 
@@ -346,10 +348,8 @@ float4 PS4(VS_OUTPUT input) : SV_TARGET
     float3 phong = diffuse + specular;
 
     float4 output;
-    //output.rgb = (observedArea, observedArea, observedArea);
     output.rgb = diffuse;
-    //output.rgb = specular;
-    //output.rgb = phong * observedArea;
+   
     output.a = color.a;
     return output;
 }
@@ -361,7 +361,7 @@ technique11 DefaultTechnique
 {
     pass P0
     {
-        SetRasterizerState(gRasterizerStateDefault);
+       // SetRasterizerState(gRasterizerStateDefault);
         SetDepthStencilState(gDepthStencilStateDefault,0);
         SetBlendState(gBlendStateDefault, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
 
@@ -375,7 +375,7 @@ technique11 LinearTechnique
 {
     pass P0
     {
-        SetRasterizerState(gRasterizerStateDefault);
+     //   SetRasterizerState(gRasterizerStateDefault);
         SetDepthStencilState(gDepthStencilStateDefault, 0);
         SetBlendState(gBlendStateDefault, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
         SetVertexShader(CompileShader(vs_5_0, VS()));
@@ -388,7 +388,7 @@ technique11 AniTechnique
 {
     pass P0
     {
-        SetRasterizerState(gRasterizerStateDefault);
+      //  SetRasterizerState(gRasterizerStateDefault);
         SetDepthStencilState(gDepthStencilStateDefault, 0);
         SetBlendState(gBlendStateDefault, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
         SetVertexShader(CompileShader(vs_5_0, VS()));
@@ -401,7 +401,7 @@ technique11 FlatTechnique
 {
     pass P0
     {
-        SetRasterizerState(gRasterizerState);
+      //  SetRasterizerState(gRasterizerState);
         SetDepthStencilState(gDepthStencilState, 0);
         SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
         SetVertexShader(CompileShader(vs_5_0, VS()));
