@@ -546,6 +546,7 @@ namespace dae {
 
 	void dae::Renderer::RenderTriangle(std::vector<Vertex_PosColOut> newTriangle) const
 	{
+
 		Vector2 a = Vector2{ newTriangle[1].Pos.x,newTriangle[1].Pos.y } - Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y };
 		Vector2 b = Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y } - Vector2{ newTriangle[1].Pos.x,newTriangle[1].Pos.y };
 		Vector2 c = Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y } - Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y };
@@ -557,7 +558,7 @@ namespace dae {
 		Vector2 edge = Vector2{ newTriangle[2].Pos.x,newTriangle[2].Pos.y } - Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y };
 		float totalArea = Vector2::Cross(a, edge);
 
-
+		//BoundingBox
 		float minX = std::min(std::min(triangleV1.x, triangleV2.x), triangleV3.x);
 		float minY = std::min(std::min(triangleV1.y, triangleV2.y), triangleV3.y);
 		float maxX = std::max(std::max(triangleV1.x, triangleV2.x), triangleV3.x);
@@ -570,6 +571,10 @@ namespace dae {
 			{
 				for (int py{ static_cast<int>(minY) }; py < std::ceil(maxY); ++py)
 				{
+		/*	for (int px{ 0 }; px < m_Width; ++px)
+			{
+				for (int py{ 0 }; py < m_Height; ++py)
+				{*/
 					float gradient = px / static_cast<float>(m_Width);
 					gradient += py / static_cast<float>(m_Width);
 					gradient /= 2.0f;
@@ -589,7 +594,7 @@ namespace dae {
 					float W1 = signedArea1 / totalArea;
 					float W2 = signedArea2 / totalArea;
 					float W3 = signedArea3 / totalArea;
-
+				
 
 					int curPixel = px + (py * m_Width);
 					ColorRGB finalColor{};
@@ -597,12 +602,35 @@ namespace dae {
 
 					if (W1 > 0.f && W2 > 0.f && W3 > 0.f) {
 
+						//CullingTest
+						switch(m_RasterState)
+						{
+						case RasterState::Back:
+							if (Vector3::Dot(newTriangle[0].Normal.Normalized(), newTriangle[0].viewDirection.Normalized()) < 0)
+							{
+								return;
+							}
+							break;
+						case RasterState::Front:
+							if (Vector3::Dot(newTriangle[0].Normal.Normalized(), newTriangle[0].viewDirection.Normalized()) > 0)
+							{
+								return;
+							}
+							break;
+							default:
+								break;
+						}
+
+					
+
 						//depth test
 						float interpolatedDepth{ 1 / ((1 / newTriangle[0].Pos.z) * W1 + (1 / newTriangle[1].Pos.z) * W2 + (1 / newTriangle[2].Pos.z) * W3) };
 						if (interpolatedDepth > m_pDepthBufferPixels[curPixel]) {
 							continue;
 						}
 						m_pDepthBufferPixels[curPixel] = interpolatedDepth;
+
+
 
 						//Deciding color
 						float interpolatedDepthW{ 1 / ((1 / newTriangle[0].Pos.w) * W1 + (1 / newTriangle[1].Pos.w) * W2 + (1 / newTriangle[2].Pos.w) * W3) };
@@ -685,7 +713,7 @@ namespace dae {
 						static_cast<uint8_t>(finalColor.b * 255));
 				}
 			}
-		}
+		} // from bounding box
 	}
 	void Renderer::VertexTransformationFunction(const std::vector<Vertex_PosCol>& vertices_in, std::vector<Vertex_PosColOut>& vertices_out, Matrix worldMatrix) const
 	{
@@ -723,7 +751,8 @@ namespace dae {
 			p.Tangent = worldMatrix.TransformVector(vertices_in[i].Tangent);
 
 			//calculateViewDirectionToo
-			p.viewDirection = Vector3{ m_pCamera->origin - p.Pos.GetXYZ() };
+			/*p.viewDirection = Vector3{ m_pCamera->origin - p.Pos.GetXYZ() };*/
+			p.viewDirection = Vector3{ m_pCamera->origin - pView.Pos };
 			vertices_out.push_back(p);
 		}
 	}
