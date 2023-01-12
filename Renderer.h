@@ -31,6 +31,7 @@ namespace dae
         void CycleTecnhique();
         void CylceShadingMode();
         void ToggleRotation() { m_isRotating = !m_isRotating; }
+        void ToggleFireMesh();
 	private:
         SDL_Window* m_pWindow{};
 
@@ -40,6 +41,7 @@ namespace dae
 
         bool m_IsInitialized{ false };
         bool m_IsUsingHardware{true};
+        bool m_IsShowingFire{ true };
         ShadingMode m_ShadingMode{};
         Camera* m_pCamera{ nullptr };
 

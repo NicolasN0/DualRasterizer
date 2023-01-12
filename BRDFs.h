@@ -36,7 +36,7 @@ namespace dae
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
 			//todo: W3
-			Vector3 reflect = l - 2 * Vector3::Dot(n, l) * n;
+			Vector3 reflect = l - 2 * (Vector3::Dot(n, l) * n);
 			float angle = Vector3::Dot(reflect, v);
 			float phongSpecRef = ks * powf(std::max(0.f,angle), exp);
 			ColorRGB color { phongSpecRef,phongSpecRef,phongSpecRef };

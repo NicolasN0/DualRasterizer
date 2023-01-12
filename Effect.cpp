@@ -56,6 +56,40 @@ Effect::~Effect()
 
 	m_pTechnique->Release();
 	m_pTechnique = nullptr;
+
+	m_pDiffuseMapVariable->Release();
+	m_pDiffuseMapVariable = nullptr;
+
+	m_pGlossMapVariable->Release();
+	m_pGlossMapVariable = nullptr;
+
+	m_pNormalMapVariable->Release();
+	m_pNormalMapVariable = nullptr;
+
+	m_pSpecularMapVariable->Release();
+	m_pSpecularMapVariable = nullptr;
+
+	m_pWorldMatrixVariable->Release();
+	m_pWorldMatrixVariable = nullptr;
+
+	m_pMatWorldViewProjVariable->Release();
+	m_pMatWorldViewProjVariable = nullptr;
+
+	m_pOnbMatrixVariable->Release();
+	m_pOnbMatrixVariable = nullptr;
+
+	m_pEffect->GetVariableByName("gWorldViewProj")->Release();
+	m_pEffect->GetVariableByName("gDiffuseMap")->Release();
+	m_pEffect->GetVariableByName("gGlossyMap")->Release();
+	m_pEffect->GetVariableByName("gNormalMap")->Release();
+	m_pEffect->GetVariableByName("gSpecularMap")->Release();
+	m_pEffect->GetVariableByName("gWorldMatrix")->Release();
+	m_pEffect->GetVariableByName("gOnb")->Release();
+
+	m_pEffect->GetTechniqueByName("DefaultTechnique")->Release();
+	m_pEffect->GetTechniqueByName("LinearTechnique")->Release();
+	m_pEffect->GetTechniqueByName("AniTechnique")->Release();
+	m_pEffect->GetTechniqueByName("FlatTechnique")->Release();
 }
 
 ID3DX11Effect* Effect::LoadEffect(ID3D11Device* pDevice, const std::wstring& assetFile)

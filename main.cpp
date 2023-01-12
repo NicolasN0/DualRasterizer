@@ -62,6 +62,8 @@ int main(int argc, char* args[])
 					pRenderer->ToggleRotation();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F5)
 					pRenderer->CylceShadingMode();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F3)
+					pRenderer->ToggleFireMesh();
 				break;
 			default: ;
 			}

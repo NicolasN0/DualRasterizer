@@ -112,7 +112,20 @@ namespace dae {
 
 	Renderer::~Renderer()
 	{
-		
+	
+		if (m_pDeviceContext)
+		{
+			m_pDeviceContext->ClearState();
+			m_pDeviceContext->Flush();
+		}
+
+		//delete m_PRenderTargetView;
+		//delete m_pRenderTargetBuffer;
+		//delete m_pDepthStencilView;
+		//delete m_pDepthStencilBuffer;
+		delete m_pSwapChain;
+		//delete m_pDeviceContext;
+		//delete m_pDevice;
 	}
 
 	void Renderer::Update(const Timer* pTimer)
@@ -157,6 +170,11 @@ namespace dae {
 		m_ShadingMode == ShadingMode::Combined ?
 			m_ShadingMode = ShadingMode(0) :
 			m_ShadingMode = ShadingMode(static_cast<int>(m_ShadingMode) + 1);
+	}
+
+	void Renderer::ToggleFireMesh()
+	{
+		m_IsShowingFire = !m_IsShowingFire;
 	}
 
 	
@@ -511,7 +529,11 @@ namespace dae {
 		//2. SET PIPELINE + INVOKE DRAWCALLS (= RENDER)
 		//...
 		m_pMesh->Render(m_pDeviceContext);
+		if(m_IsShowingFire)
+		{
+			
 		m_pCombustionMesh->Render(m_pDeviceContext);
+		}
 
 		//3. PRESENT BACKBUFFER (SWAP)
 		m_pSwapChain->Present(0, 0);
