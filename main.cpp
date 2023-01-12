@@ -68,6 +68,8 @@ int main(int argc, char* args[])
 					pRenderer->CylceShadingMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F6)
 					pRenderer->ToggleNormalMap();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F7)
+					pRenderer->ToggleDepthShow();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
 					pRenderer->CycleState();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F10)

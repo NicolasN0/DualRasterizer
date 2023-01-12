@@ -262,6 +262,11 @@ namespace dae {
 		m_IsUniformColor = !m_IsUniformColor;
 	}
 
+	void Renderer::ToggleDepthShow()
+	{
+		m_IsShowingDepth = !m_IsShowingDepth;
+	}
+
 	
 
 	HRESULT Renderer::InitializeDirectX()
@@ -700,7 +705,11 @@ namespace dae {
 
 						//Vertex_Out interpolatedV = { interpolatedPos,interpolatedColor,interpolatedUV,interpolatedNormal,interpolatedTangent,interpolatedViewDir };
 						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specMag * shininess, glosMag * shininess);
-
+						if(m_IsShowingDepth)
+						{
+							float d = (2.0 * m_pCamera->m_NearPlane) / (m_pCamera->m_FarPlane + m_pCamera->m_NearPlane - interpolatedDepth * (m_pCamera->m_FarPlane - m_pCamera->m_NearPlane));
+							m_ColorBuffer[curPixel] = ColorRGB{ d,d,d };
+						}
 					}
 
 					finalColor = m_ColorBuffer[curPixel];

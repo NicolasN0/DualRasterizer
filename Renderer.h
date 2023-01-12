@@ -50,6 +50,7 @@ namespace dae
         void CycleState();
         void CycleSampler();
         void ToggleUniformColor();
+        void ToggleDepthShow();
 	private:
         SDL_Window* m_pWindow{};
 
@@ -60,7 +61,7 @@ namespace dae
         bool m_IsInitialized{ false };
         bool m_IsUsingHardware{true};
         bool m_IsShowingFire{ true };
-
+        bool m_IsShowingDepth{};
         bool m_IsUniformColor{};
 
         ShadingMode m_ShadingMode{};
