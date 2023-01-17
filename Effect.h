@@ -18,15 +18,15 @@ public:
 	void SetSampler(ID3D11SamplerState* sampler);
 private:
 	
-	ID3DX11EffectShaderResourceVariable* m_pDiffuseMapVariable{ nullptr };
-	ID3DX11EffectShaderResourceVariable* m_pGlossMapVariable{ nullptr };
-	ID3DX11EffectShaderResourceVariable* m_pNormalMapVariable{ nullptr };
-	ID3DX11EffectShaderResourceVariable* m_pSpecularMapVariable{ nullptr };
+	ID3DX11EffectShaderResourceVariable* m_pDiffuse{ nullptr };
+	ID3DX11EffectShaderResourceVariable* m_pGloss{ nullptr };
+	ID3DX11EffectShaderResourceVariable* m_pNormals{ nullptr };
+	ID3DX11EffectShaderResourceVariable* m_pSpec{ nullptr };
 	ID3DX11Effect* m_pEffect{ nullptr };
 	ID3DX11EffectTechnique* m_pTechnique{ nullptr };
-	ID3DX11EffectMatrixVariable* m_pMatWorldViewProjVariable{ nullptr };
-	ID3DX11EffectMatrixVariable* m_pWorldMatrixVariable{ nullptr };
-	ID3DX11EffectVectorVariable* m_pOnbMatrixVariable{ nullptr };
+	ID3DX11EffectMatrixVariable* m_pWorldViewProjMatrix{ nullptr };
+	ID3DX11EffectMatrixVariable* m_pWorldMatrix{ nullptr };
+	ID3DX11EffectVectorVariable* m_pOnbMatrix{ nullptr };
 
 	ID3DX11EffectSamplerVariable* m_pSampleVar{ nullptr };
 };

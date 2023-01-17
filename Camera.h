@@ -40,7 +40,7 @@ namespace dae
 		float rotspeed{ 0.005f };
 
 		float aspectRatio{ 0.f };
-		Matrix worldViewProjectionMatrix{};
+		Matrix worldViewProjMatrix{};
 		Matrix invViewMatrix{};
 		Matrix onbMatrix{};
 		Matrix viewMatrix{};
@@ -49,6 +49,8 @@ namespace dae
 		const float m_NearPlane = 0.1f;
 		const float m_FarPlane = 100.f;
 
+		bool m_IsBoosting{};
+		float m_BoostSpeed{40.f};
 	/*	void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})
 		{
 			fovAngle = _fovAngle;
@@ -107,6 +109,14 @@ namespace dae
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
+			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
+			{
+				
+				m_IsBoosting = true;
+			} else
+			{
+				m_IsBoosting = false;
+			}
 		/*	origin += pKeyboardState[SDL_SCANCODE_W] * forwardSpeed;
 			origin -= pKeyboardState[SDL_SCANCODE_S] * forwardSpeed;
 
@@ -117,23 +127,49 @@ namespace dae
 			origin -= pKeyboardState[SDL_SCANCODE_A] * sideSpeed;*/
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{
+				if(m_IsBoosting)
+				{
+					
+					origin += forward * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed) ;
+				} else
+				{
+					origin += forward * pTimer->GetElapsed() * movementSpeed;
 
-				origin += forward * pTimer->GetElapsed() * movementSpeed;
+				}
 			}
 			if (pKeyboardState[SDL_SCANCODE_S])
 			{
+				if (m_IsBoosting)
+				{
+					origin -= forward * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+				}
+				else
+				{
+					origin -= forward * pTimer->GetElapsed() * movementSpeed;
 
-				origin -= forward * pTimer->GetElapsed() * movementSpeed;
+				}
 			}
 			if (pKeyboardState[SDL_SCANCODE_A])
 			{
+				if (m_IsBoosting)
+				{
+					origin -= rightLocal * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+				}else
+				{
+					origin -= rightLocal * pTimer->GetElapsed() * movementSpeed;
 
-				origin -= rightLocal * pTimer->GetElapsed() * movementSpeed;
+				}
 			}
 			if (pKeyboardState[SDL_SCANCODE_D])
 			{
+				if (m_IsBoosting)
+				{
+					origin += rightLocal * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+				}else
+				{
+					origin += rightLocal * pTimer->GetElapsed() * movementSpeed;
 
-				origin += rightLocal * pTimer->GetElapsed() * movementSpeed;
+				}
 			}
 
 

@@ -49,10 +49,9 @@ public:
     void SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos);
     void SetWorldMatrix(dae::Matrix matrix) { m_WorldMatrix = matrix; };
     void Render(ID3D11DeviceContext* pDeviceContext);
-    //void CycleTechnique();
 
-    Effect* m_pEffect{ nullptr };
     dae::Matrix m_WorldMatrix{};
+    Effect* m_pEffect{ nullptr };
 
     //software
     std::vector<Vertex_PosCol> vertices{};
@@ -62,7 +61,7 @@ private:
     ID3D11InputLayout* m_pInputLayout{ nullptr };
     ID3D11Buffer* m_pVertexBuffer{ nullptr };
     ID3D11Buffer* m_pIndexBuffer{ nullptr };
-    int m_NumIndices{ 0 };
+    int m_NumInd{ 0 };
     Technique m_Technique{ Technique::Point };
 
     PrimitiveTopology primitiveTopology{ PrimitiveTopology::TriangleStrip };

@@ -54,41 +54,37 @@ namespace dae {
 		m_pTextureGloss = Texture::LoadFromFile("Resources/vehicle_gloss.png", m_pDevice);
 		m_pTextureNormal = Texture::LoadFromFile("Resources/vehicle_normal.png", m_pDevice);
 		m_pTextureSpecular = Texture::LoadFromFile("Resources/vehicle_specular.png", m_pDevice);
-		Utils::ParseOBJ("Resources/vehicle.obj",
-			vertices,
-			indices
-		);
-		for (Vertex_PosCol& vert : vertices) {
+		Utils::ParseOBJ("Resources/vehicle.obj",vertices,indices);
+
+		for (Vertex_PosCol& vert : vertices)
+		{
 			vert.Color = { 1,1,1 };
 		}
 
-		m_pMesh = new Mesh{ m_pDevice, vertices, indices };
-		m_pMesh->indices = indices; // for software
-		m_pMesh->vertices = vertices; // for software
+		m_pVehicleMesh = new Mesh{ m_pDevice, vertices, indices };
+		m_pVehicleMesh->indices = indices; // for software
+		m_pVehicleMesh->vertices = vertices; // for software
 		m_TransMatrix = Matrix::CreateTranslation(0, 0, 50);
 		m_RotMatrix = Matrix::CreateRotationZ(0);
 		m_ScaleMatrix = Matrix::CreateScale(1, 1, 1);
-		m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+		m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 
-		m_pMesh->m_pEffect->SetMaps(m_pTexture, m_pTextureSpecular, m_pTextureNormal, m_pTextureGloss);
+		m_pVehicleMesh->m_pEffect->SetMaps(m_pTexture, m_pTextureSpecular, m_pTextureNormal, m_pTextureGloss);
 
 
 		//Fire
 
 		std::vector<Vertex_PosCol>vertices2{};
-
 		std::vector<uint32_t> indices2{};
 		m_pTextureFire = Texture::LoadFromFile("Resources/fireFX_diffuse.png", m_pDevice);
-		Utils::ParseOBJ("Resources/fireFX.obj",
-			vertices2,
-			indices2
-		);
-		for (Vertex_PosCol& vert2 : vertices2) {
+		Utils::ParseOBJ("Resources/fireFX.obj",vertices2,indices2);
+		for (Vertex_PosCol& vert2 : vertices2) 
+		{
 			vert2.Color = { 1,1,1 };
 		}
 		m_pCombustionMesh = new Mesh{ m_pDevice, vertices2, indices2 };
 		m_pCombustionMesh->indices = indices2; // for software
-		m_pCombustionMesh->vertices = vertices2;
+		m_pCombustionMesh->vertices = vertices2; //  for software
 
 		m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 		m_pCombustionMesh->m_pEffect->SetMaps(m_pTextureFire);
@@ -102,20 +98,20 @@ namespace dae {
 		m_pCamera = new Camera(Vector3{ 0.f, 0.f, 0.f }, 45.f);
 
 		m_pCamera->aspectRatio = screenWidth / screenHeight;
-		m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+		m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 
 		//Vehicle
-		m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
 
 		//Fire
-		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
 		m_pCombustionMesh->m_pEffect->ChangeEffect("FlatTechnique");
 	}
 
 	Renderer::~Renderer()
 	{
-		delete m_pMesh;
-		m_pMesh = nullptr;
+		delete m_pVehicleMesh;
+		m_pVehicleMesh = nullptr;
 
 		delete m_pCombustionMesh;
 		m_pCombustionMesh = nullptr;
@@ -167,22 +163,20 @@ namespace dae {
 
 	void Renderer::Update(const Timer* pTimer)
 	{
-
+		m_pCamera->Update(pTimer);
 
 		if(m_isRotating)
 		{
-			m_Rot = (cos(pTimer->GetTotal()) + 1.f) / 2.f * PI_2;
-			const float screenWidth{ static_cast<float>(m_Width) };
-			const float screenHeight{ static_cast<float>(m_Height) };
-			m_pCamera->aspectRatio = screenWidth / screenHeight;
-			m_pCamera->Update(pTimer);
+			m_Rot = pTimer->GetTotal() * (45 * PI / 180);
 
 			m_RotMatrix = Matrix::CreateRotationY(m_Rot);
-			m_pMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+			m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 			m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-			m_pCamera->worldViewProjectionMatrix = m_pMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
-			m_pMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pMesh->m_WorldMatrix, &m_pCamera->origin);
-			m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjectionMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+			//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+			m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
+
+			m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
+			m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
 
 		}
 	}
@@ -245,13 +239,13 @@ namespace dae {
 		switch (m_SamplerState)
 		{
 		case SamplerState::Point:
-				m_pMesh->m_pEffect->SetSampler(m_pPointSample);
+				m_pVehicleMesh->m_pEffect->SetSampler(m_pPointSample);
 			break;
 		case SamplerState::Linear:
-			m_pMesh->m_pEffect->SetSampler(m_pLinearSample);
+			m_pVehicleMesh->m_pEffect->SetSampler(m_pLinearSample);
 			break;
 		case SamplerState::Anisotropic:
-			m_pMesh->m_pEffect->SetSampler(m_pAnisotropicSample);
+			m_pVehicleMesh->m_pEffect->SetSampler(m_pAnisotropicSample);
 			break;
 		}
 
@@ -529,12 +523,12 @@ namespace dae {
 
 
 	
-		for (int i{}; i < m_pMesh->indices.size(); i += 3)
+		for (int i{}; i < m_pVehicleMesh->indices.size(); i += 3)
 		{
-			std::vector<Vertex_PosCol> triangle{ m_pMesh->vertices[m_pMesh->indices[i]],m_pMesh->vertices[m_pMesh->indices[i + 1]],m_pMesh->vertices[m_pMesh->indices[i + 2]] };
+			std::vector<Vertex_PosCol> triangle{ m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i]],m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i + 1]],m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i + 2]] };
 
 			std::vector<Vertex_PosColOut> totalVertices;
-			VertexTransformationFunction(triangle, totalVertices, m_pMesh->m_WorldMatrix);
+			VertexTransformationFunction(triangle, totalVertices, m_pVehicleMesh->m_WorldMatrix);
 
 			RenderTriangle(totalVertices);
 		}
@@ -787,7 +781,7 @@ namespace dae {
 
 		//2. SET PIPELINE + INVOKE DRAWCALLS (= RENDER)
 		//...
-		m_pMesh->Render(m_pDeviceContext);
+		m_pVehicleMesh->Render(m_pDeviceContext);
 		if(m_IsShowingFire)
 		{
 			

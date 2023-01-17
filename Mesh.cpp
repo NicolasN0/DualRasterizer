@@ -72,9 +72,9 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices,std::vecto
 		return;
 
 	//create indexBuffer
-	m_NumIndices = static_cast<uint32_t>(indices.size());
+	m_NumInd = static_cast<uint32_t>(indices.size());
 	bd.Usage = D3D11_USAGE_IMMUTABLE;
-	bd.ByteWidth = sizeof(uint32_t) * m_NumIndices;
+	bd.ByteWidth = sizeof(uint32_t) * m_NumInd;
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 	bd.MiscFlags = 0;
@@ -123,37 +123,11 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 	for(UINT p = 0; p <techDesc.Passes;++p)
 	{
 		m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContext);
-		pDeviceContext->DrawIndexed(m_NumIndices, 0, 0);
+		pDeviceContext->DrawIndexed(m_NumInd, 0, 0);
 	}
 }
 
 
-//void Mesh::CycleTechnique()
-//{
-//	m_Technique == Technique::Anisotropic ?
-//		m_Technique = Technique(0) :
-//		m_Technique = Technique(static_cast<int>(m_Technique) + 1);
-//
-//
-//	switch (m_Technique)
-//	{
-//	case Technique::Point:
-//		m_pEffect->ChangeEffect("DefaultTechnique");
-//		break;
-//	case Technique::Linear:
-//		m_pEffect->ChangeEffect("LinearTechnique");
-//		break;
-//	case Technique::Anisotropic:
-//		m_pEffect->ChangeEffect("AniTechnique");
-//		break;
-//	case Technique::Flat:
-//		m_pEffect->ChangeEffect("FlatTechnique");
-//		break;
-//	default:
-//		break;
-//	}
-//	m_pTechnique = m_pEffect->GetTechnique();
-//}
 
 void Mesh::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos)
 {

@@ -92,7 +92,7 @@ namespace dae
 
 
         Mesh* m_pCombustionMesh{ nullptr };
-        Mesh* m_pMesh{ nullptr };
+        Mesh* m_pVehicleMesh{ nullptr };
         Texture* m_pTexture{ nullptr };
         Texture* m_pTextureGloss{ nullptr };
         Texture* m_pTextureNormal{ nullptr };

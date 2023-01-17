@@ -13,38 +13,38 @@ Effect::Effect(ID3D11Device* device, const std::wstring& assetFile)
 	if (!m_pTechnique->IsValid())
 		std::wcout << L"Technique is not valid\n";
 
-	m_pMatWorldViewProjVariable = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
-	if (!m_pMatWorldViewProjVariable->IsValid()) {
-		std::wcout << L"m_pMatWorldViewProjVariable is not valid! \n";
+	m_pWorldViewProjMatrix = m_pEffect->GetVariableByName("gWorldViewProj")->AsMatrix();
+	if (!m_pWorldViewProjMatrix->IsValid()) {
+		std::wcout << L"m_pWorldViewProjMatrix is not valid! \n";
 	}
 
 	//maps
-	m_pDiffuseMapVariable = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
-	if (!m_pDiffuseMapVariable->IsValid()) {
-		std::wcout << L"m_pDiffuseMapVariable is not valid! \n";
+	m_pDiffuse = m_pEffect->GetVariableByName("gDiffuseMap")->AsShaderResource();
+	if (!m_pDiffuse->IsValid()) {
+		std::wcout << L"m_pDiffuse is not valid! \n";
 	}
-	m_pGlossMapVariable = m_pEffect->GetVariableByName("gGlossyMap")->AsShaderResource();
-	if (!m_pDiffuseMapVariable->IsValid()) {
-		std::wcout << L"m_pGlossMapVariable is not valid! \n";
+	m_pGloss = m_pEffect->GetVariableByName("gGlossyMap")->AsShaderResource();
+	if (!m_pDiffuse->IsValid()) {
+		std::wcout << L"m_pGloss is not valid! \n";
 	}
-	m_pNormalMapVariable = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
-	if (!m_pDiffuseMapVariable->IsValid()) {
-		std::wcout << L"m_pNormalMapVariable is not valid! \n";
+	m_pNormals = m_pEffect->GetVariableByName("gNormalMap")->AsShaderResource();
+	if (!m_pDiffuse->IsValid()) {
+		std::wcout << L"m_pNormals is not valid! \n";
 	}
-	m_pSpecularMapVariable = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
-	if (!m_pDiffuseMapVariable->IsValid()) {
-		std::wcout << L"m_pSpecularMapVariable is not valid! \n";
+	m_pSpec = m_pEffect->GetVariableByName("gSpecularMap")->AsShaderResource();
+	if (!m_pDiffuse->IsValid()) {
+		std::wcout << L"m_pSpec is not valid! \n";
 	}
 
 	//matrix
-	m_pWorldMatrixVariable = m_pEffect->GetVariableByName("gWorldMatrix")->AsMatrix();
-	if (!m_pWorldMatrixVariable->IsValid()) {
-		std::wcout << L"m_pWorldMatrixVariable is not valid! \n";
+	m_pWorldMatrix = m_pEffect->GetVariableByName("gWorldMatrix")->AsMatrix();
+	if (!m_pWorldMatrix->IsValid()) {
+		std::wcout << L"m_pWorldMatrix is not valid! \n";
 	}
 
-	m_pOnbMatrixVariable = m_pEffect->GetVariableByName("gOnb")->AsVector();
-	if (!m_pOnbMatrixVariable->IsValid()) {
-		std::wcout << L"m_pOnbMatrixVariable is not valid! \n";
+	m_pOnbMatrix = m_pEffect->GetVariableByName("gOnb")->AsVector();
+	if (!m_pOnbMatrix->IsValid()) {
+		std::wcout << L"m_pOnbMatrix is not valid! \n";
 	}
 
 	//Samplers
@@ -58,26 +58,26 @@ Effect::~Effect()
 {
 	
 
-	m_pDiffuseMapVariable->Release();
-	m_pDiffuseMapVariable = nullptr;
+	m_pDiffuse->Release();
+	m_pDiffuse = nullptr;
 
-	m_pGlossMapVariable->Release();
-	m_pGlossMapVariable = nullptr;
+	m_pGloss->Release();
+	m_pGloss = nullptr;
 
-	m_pNormalMapVariable->Release();
-	m_pNormalMapVariable = nullptr;
+	m_pNormals->Release();
+	m_pNormals = nullptr;
 
-	m_pSpecularMapVariable->Release();
-	m_pSpecularMapVariable = nullptr;
+	m_pSpec->Release();
+	m_pSpec = nullptr;
 
-	m_pWorldMatrixVariable->Release();
-	m_pWorldMatrixVariable = nullptr;
+	m_pWorldMatrix->Release();
+	m_pWorldMatrix = nullptr;
 
-	m_pMatWorldViewProjVariable->Release();
-	m_pMatWorldViewProjVariable = nullptr;
+	m_pWorldViewProjMatrix->Release();
+	m_pWorldViewProjMatrix = nullptr;
 
-	m_pOnbMatrixVariable->Release();
-	m_pOnbMatrixVariable = nullptr;
+	m_pOnbMatrix->Release();
+	m_pOnbMatrix = nullptr;
 
 	m_pEffect->GetVariableByName("gWorldViewProj")->Release();
 	m_pEffect->GetVariableByName("gDiffuseMap")->Release();
@@ -158,41 +158,41 @@ ID3DX11EffectTechnique* Effect::GetTechnique()
 
 void Effect::UpdateData(dae::Matrix* worldViewProjection)
 {
-	m_pMatWorldViewProjVariable->SetMatrix(reinterpret_cast<const float*>(worldViewProjection));
+	m_pWorldViewProjMatrix->SetMatrix(reinterpret_cast<const float*>(worldViewProjection));
 }
 
 
 void Effect::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos) {
-	m_pMatWorldViewProjVariable->SetMatrix(reinterpret_cast<const float*>(matrix));
-	m_pWorldMatrixVariable->SetMatrix(reinterpret_cast<const float*>(worldMatrix));
-	m_pOnbMatrixVariable->SetFloatVector(reinterpret_cast<const float*>(cameraPos));
+	m_pWorldViewProjMatrix->SetMatrix(reinterpret_cast<const float*>(matrix));
+	m_pWorldMatrix->SetMatrix(reinterpret_cast<const float*>(worldMatrix));
+	m_pOnbMatrix->SetFloatVector(reinterpret_cast<const float*>(cameraPos));
 }
 
 void Effect::SetMaps(dae::Texture* pDiffuseTexture, dae::Texture* pSpecularMap, dae::Texture* pNormalMap, dae::Texture* pGlossMap)
 {
-	if (m_pDiffuseMapVariable) 
+	if (m_pDiffuse) 
 	{
-		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
+		m_pDiffuse->SetResource(pDiffuseTexture->GetSRV());
 	}
-	if (m_pSpecularMapVariable) 
+	if (m_pSpec) 
 	{
-		m_pSpecularMapVariable->SetResource(pSpecularMap->GetSRV());
+		m_pSpec->SetResource(pSpecularMap->GetSRV());
 	}
-	if (m_pNormalMapVariable) 
+	if (m_pNormals) 
 	{
-		m_pNormalMapVariable->SetResource(pNormalMap->GetSRV());
+		m_pNormals->SetResource(pNormalMap->GetSRV());
 	}
-	if (m_pGlossMapVariable)
+	if (m_pGloss)
 	{
-		m_pGlossMapVariable->SetResource(pGlossMap->GetSRV());
+		m_pGloss->SetResource(pGlossMap->GetSRV());
 	}
 }
 
 void Effect::SetMaps(dae::Texture* pDiffuseTexture)
 {
-	if (m_pDiffuseMapVariable) 
+	if (m_pDiffuse) 
 	{
-		m_pDiffuseMapVariable->SetResource(pDiffuseTexture->GetSRV());
+		m_pDiffuse->SetResource(pDiffuseTexture->GetSRV());
 	}
 	
 }
