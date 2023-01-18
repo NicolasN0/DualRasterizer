@@ -12,6 +12,9 @@ namespace dae {
 	{
 		//Initialize
 		SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
+		m_Handle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+		ShowKeybindings();
 		//Software
 		//Create Buffers
 		m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
@@ -195,23 +198,104 @@ namespace dae {
 
 	void Renderer::CycleTecnhique()
 	{
+		SetConsoleTextAttribute(m_Handle, 14);
+
 		m_IsUsingHardware = !m_IsUsingHardware;
+		if (m_IsUsingHardware)
+		{
+			std::cout << "**(SHARED) Rasterizer Mode = HARDWARE" << std::endl;
+		}
+		else
+		{
+			std::cout << "**(SHARED) Rasterizer Mode = SOFTWARE" << std::endl;
+
+		}
 	}
 
 	void Renderer::CylceShadingMode()
 	{
-		m_ShadingMode == ShadingMode::Combined ?
-			m_ShadingMode = ShadingMode(0) :
-			m_ShadingMode = ShadingMode(static_cast<int>(m_ShadingMode) + 1);
+		if (!m_IsUsingHardware)
+		{
+			SetConsoleTextAttribute(m_Handle, 5);
+			m_ShadingMode == ShadingMode::Combined ?
+				m_ShadingMode = ShadingMode(0) :
+				m_ShadingMode = ShadingMode(static_cast<int>(m_ShadingMode) + 1);
+
+			switch (m_ShadingMode)
+			{
+			case ShadingMode::Combined:
+				std::cout << "**(SOFTWARE) Shading Mode = COMBINED" << std::endl;
+				break;
+			case ShadingMode::Specular:
+				std::cout << "**(SOFTWARE) Shading Mode = SPECULAR" << std::endl;
+				break;
+			case ShadingMode::Diffuse:
+				std::cout << "**(SOFTWARE) Shading Mode = DIFFUSE" << std::endl;
+				break;
+			case ShadingMode::ObservedArea:
+				std::cout << "**(SOFTWARE) Shading Mode = OBSERVED_AREA" << std::endl;
+				break;
+			}
+		}
+		
+		
+	}
+
+	void Renderer::ToggleRotation()
+	{
+		SetConsoleTextAttribute(m_Handle, 14);
+		m_isRotating = !m_isRotating;
+		if (m_isRotating)
+		{
+			std::cout << "**(SHARED) Rotating ON" << std::endl;
+		}
+		else
+		{
+			std::cout << "**(SHARED) Rotating OFF" << std::endl;
+
+		}
 	}
 
 	void Renderer::ToggleFireMesh()
 	{
-		m_IsShowingFire = !m_IsShowingFire;
+		if(m_IsUsingHardware)
+		{
+			SetConsoleTextAttribute(m_Handle, 2);
+			m_IsShowingFire = !m_IsShowingFire;
+			if (m_IsShowingFire)
+			{
+				std::cout << "**(HARDWARE) FireFX ON" << std::endl;
+			}
+			else
+			{
+				std::cout << "**(HARDWARE) FireFX OFF" << std::endl;
+
+			}
+		}
+		
 	}
 
-	void Renderer::CycleState()
+	void Renderer::ToggleNormalMap()
 	{
+		if(!m_IsUsingHardware)
+		{
+			SetConsoleTextAttribute(m_Handle, 5);
+			m_HasNormalMap = !m_HasNormalMap;
+			if (m_HasNormalMap)
+			{
+				std::cout << "**(SOFTWARE) NormalMap ON" << std::endl;
+			}
+			else
+			{
+				std::cout << "**(SOFTWARE) NormalMap OFF" << std::endl;
+
+			}
+		}
+	}
+
+	void Renderer::CycleCullMode()
+	{
+		SetConsoleTextAttribute(m_Handle, 14);
 		m_RasterState == RasterState::Back ?
 			m_RasterState = RasterState(0) :
 			m_RasterState = RasterState(static_cast<int>(m_RasterState) + 1);
@@ -220,53 +304,129 @@ namespace dae {
 		{
 		case RasterState::None:
 			m_pDeviceContext->RSSetState(m_pDefaultState);
+			std::cout << "**(SHARED) CullMode = NONE" << std::endl;
 			break;
 		case RasterState::Front:
 			m_pDeviceContext->RSSetState(m_pFrontCullState);
+			std::cout << "**(SHARED) CullMode = FRONT" << std::endl;
 			break;
 		case RasterState::Back:
 			m_pDeviceContext->RSSetState(m_pBackCullState);
+			std::cout << "**(SHARED) CullMode = BACK" << std::endl;
 			break;
 		}
 	}
 
 	void Renderer::CycleSampler()
 	{
-		m_SamplerState == SamplerState::Anisotropic ?
-			m_SamplerState = SamplerState(0) :
-			m_SamplerState = SamplerState(static_cast<int>(m_SamplerState) + 1);
-
-		switch (m_SamplerState)
+		if(m_IsUsingHardware)
 		{
-		case SamplerState::Point:
+			SetConsoleTextAttribute(m_Handle, 2);
+
+			m_SamplerState == SamplerState::Anisotropic ?
+				m_SamplerState = SamplerState(0) :
+				m_SamplerState = SamplerState(static_cast<int>(m_SamplerState) + 1);
+
+			switch (m_SamplerState)
+			{
+			case SamplerState::Point:
 				m_pVehicleMesh->m_pEffect->SetSampler(m_pPointSample);
-			break;
-		case SamplerState::Linear:
-			m_pVehicleMesh->m_pEffect->SetSampler(m_pLinearSample);
-			break;
-		case SamplerState::Anisotropic:
-			m_pVehicleMesh->m_pEffect->SetSampler(m_pAnisotropicSample);
-			break;
+				std::cout << "**(HARDWARE) Sampler Filter = POINT" << std::endl;
+
+				break;
+			case SamplerState::Linear:
+				m_pVehicleMesh->m_pEffect->SetSampler(m_pLinearSample);
+				std::cout << "**(HARDWARE) Sampler Filter = LINEAR" << std::endl;
+
+				break;
+			case SamplerState::Anisotropic:
+				m_pVehicleMesh->m_pEffect->SetSampler(m_pAnisotropicSample);
+				std::cout << "**(HARDWARE) Sampler Filter = ANISOTROPIC" << std::endl;
+
+				break;
+			}
 		}
+		
 
 	}
 
 	void Renderer::ToggleUniformColor()
 	{
+		SetConsoleTextAttribute(m_Handle,14);
 		m_IsUniformColor = !m_IsUniformColor;
+		if (m_IsUniformColor)
+		{
+			std::cout << "**(SHARED) Uniform ClearColor ON" << std::endl;
+		} else
+		{
+			std::cout << "**(SHARED) Uniform ClearColor OFF" << std::endl;
+
+		}
+			
 	}
 
 	void Renderer::ToggleDepthShow()
 	{
-		m_IsShowingDepth = !m_IsShowingDepth;
+		if(!m_IsUsingHardware)
+		{
+			SetConsoleTextAttribute(m_Handle, 5);
+			m_IsShowingDepth = !m_IsShowingDepth;
+			if (m_IsShowingDepth)
+			{
+				std::cout << "**(SOFTWARE) DepthBuffer Visualization ON" << std::endl;
+			}
+			else
+			{
+				std::cout << "**(SOFTWARE) DepthBuffer Visualization OFF" << std::endl;
+
+			}
+		}
 	}
 
 	void Renderer::ToggleBoundingBoxShow()
 	{
-		m_IsShowingBoundingBox = !m_IsShowingBoundingBox;
+		if(!m_IsUsingHardware)
+		{
+			SetConsoleTextAttribute(m_Handle, 5);
+			m_IsShowingBoundingBox = !m_IsShowingBoundingBox;
+			if (m_IsShowingBoundingBox)
+			{
+				std::cout << "**(SOFTWARE) BoundingBox Visualization ON" << std::endl;
+			}
+			else
+			{
+				std::cout << "**(SOFTWARE) BoundingBox Visualization OFF" << std::endl;
+
+			}
+		}
 	}
 
 	
+
+	void Renderer::ShowKeybindings()
+	{
+		
+		SetConsoleTextAttribute(m_Handle, 14);
+		std::cout << "[Key Bindings - SHARED]" << std::endl;
+		std::cout << "\t [F1] Toggle Rasterizer Mode (HARDWARE/SOFTWARE)" << std::endl;
+		std::cout << "\t [F2] Toggle Vehicle Rotation (ON/OFF)" << std::endl;
+		std::cout << "\t [F9] Cycle CullMode (BACK/FRONT/NONE)" << std::endl;
+		std::cout << "\t [F10] Toggle Uniform ClearColor (ON/OFF)" << std::endl;
+		std::cout << "\t [F11] Toggle Print FPS (ON/OFF)" << std::endl;
+		std::cout << std::endl;
+		SetConsoleTextAttribute(m_Handle, 2);
+		std::cout << "[Key Bindings - HARDWARE]" << std::endl;
+		std::cout << "\t [F3] Toggle FireFX (ON/OFF)" << std::endl;
+		std::cout << "\t [F4] Cycle Sampler State (POINT/LINEAR/ANISOTROPIC)" << std::endl;
+		std::cout << std::endl;
+		SetConsoleTextAttribute(m_Handle, 5);
+		std::cout << "[Key Bindings - SOFTWARE]" << std::endl;
+		std::cout << "\t [F5] Cycle Shading Mode (COMBINED/OBSERVED_AREA/DIFFUSE/SPECULAR)" << std::endl;
+		std::cout << "\t [F6] Toggle NormalMap (ON/OFF)" << std::endl;
+		std::cout << "\t [F7] Toggle DepthBuffer Visualization (ON/OFF)" << std::endl;
+		std::cout << "\t [F8] Toggle BoundingBox Visualization (ON/OFF)" << std::endl;
+
+	}
 
 	HRESULT Renderer::InitializeDirectX()
 	{

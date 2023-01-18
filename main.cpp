@@ -26,9 +26,10 @@ int main(int argc, char* args[])
 
 	const uint32_t width = 640;
 	const uint32_t height = 480;
-
+	//control fps console
+	bool showFps{};
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"DirectX - ***Insert Name/Class***",
+		"Dual Rasterizer - ***Nicolas Neve (2DAE07)***",
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -73,9 +74,25 @@ int main(int argc, char* args[])
 				if (e.key.keysym.scancode == SDL_SCANCODE_F8)
 					pRenderer->ToggleBoundingBoxShow();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F9)
-					pRenderer->CycleState();
+					pRenderer->CycleCullMode();
 				if (e.key.keysym.scancode == SDL_SCANCODE_F10)
 					pRenderer->ToggleUniformColor();
+				if (e.key.keysym.scancode == SDL_SCANCODE_F11)
+				{
+					HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+					SetConsoleTextAttribute(h, 14);
+					showFps = !showFps;
+					if(showFps)
+					{
+						
+						std::cout << "**(SHARED) Print FPS ON" << std::endl;
+					} else
+					{
+						std::cout << "**(SHARED) Print FPS OFF" << std::endl;
+
+					}
+				}
+
 				break;
 			default: ;
 			}
@@ -90,8 +107,11 @@ int main(int argc, char* args[])
 		//--------- Timer ---------
 		pTimer->Update();
 		printTimer += pTimer->GetElapsed();
-		if (printTimer >= 1.f)
+		if (printTimer >= 1.f && showFps == true)
 		{
+			HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+			SetConsoleTextAttribute(h, 8);
+
 			printTimer = 0.f;
 			std::cout << "dFPS: " << pTimer->GetdFPS() << std::endl;
 		}

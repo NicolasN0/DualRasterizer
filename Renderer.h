@@ -44,16 +44,17 @@ namespace dae
 		void Render() const;
         void CycleTecnhique();
         void CylceShadingMode();
-        void ToggleRotation() { m_isRotating = !m_isRotating; }
+        void ToggleRotation();
         void ToggleFireMesh();
-        void ToggleNormalMap() { m_HasNormalMap = !m_HasNormalMap; }
-        void CycleState();
+        void ToggleNormalMap();
+        void CycleCullMode();
         void CycleSampler();
         void ToggleUniformColor();
         void ToggleDepthShow();
         void ToggleBoundingBoxShow();
 	private:
         SDL_Window* m_pWindow{};
+        HANDLE m_Handle;
 
         int m_Width{};
         int m_Height{};
@@ -105,6 +106,8 @@ namespace dae
         Matrix m_TransMatrix{};
         Matrix m_RotMatrix{};
         Matrix m_ScaleMatrix{};
+
+        void ShowKeybindings();
 
 		//DIRECTX
 		HRESULT InitializeDirectX();
