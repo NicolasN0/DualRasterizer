@@ -75,12 +75,16 @@ namespace dae
 	{
 		//TODO
 		//Sample the correct texel for the given uv
-		if(uv.x < 0 || uv.y < 0)
+		/*if(uv.x < 0 || uv.y < 0)
 		{
 			return ColorRGB{ 0,0,0 };
-		}
-		int width = uv.x * m_pSurface->w;
-		int height = uv.y * m_pSurface->h;
+		}*/
+		
+		/*int width = uv.x * m_pSurface->w;
+		int height = uv.y * m_pSurface->h;*/
+
+		int width = abs(uv.x) * m_pSurface->w;
+		int height = abs(uv.y) * m_pSurface->h;
 
 		SDL_Color finalColor;
 

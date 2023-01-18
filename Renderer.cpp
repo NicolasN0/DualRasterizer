@@ -261,6 +261,11 @@ namespace dae {
 		m_IsShowingDepth = !m_IsShowingDepth;
 	}
 
+	void Renderer::ToggleBoundingBoxShow()
+	{
+		m_IsShowingBoundingBox = !m_IsShowingBoundingBox;
+	}
+
 	
 
 	HRESULT Renderer::InitializeDirectX()
@@ -598,7 +603,10 @@ namespace dae {
 					int curPixel = px + (py * m_Width);
 					ColorRGB finalColor{};
 					
-
+					if(m_IsShowingBoundingBox)
+					{
+						m_ColorBuffer[curPixel] = ColorRGB{ 1,1,1 };
+					} else
 					if (W1 > 0.f && W2 > 0.f && W3 > 0.f) {
 
 						//CullingTest

@@ -51,6 +51,7 @@ namespace dae
         void CycleSampler();
         void ToggleUniformColor();
         void ToggleDepthShow();
+        void ToggleBoundingBoxShow();
 	private:
         SDL_Window* m_pWindow{};
 
@@ -63,6 +64,7 @@ namespace dae
         bool m_IsShowingFire{ true };
         bool m_IsShowingDepth{};
         bool m_IsUniformColor{};
+        bool m_IsShowingBoundingBox{};
 
         ShadingMode m_ShadingMode{};
         SamplerState m_SamplerState{};
