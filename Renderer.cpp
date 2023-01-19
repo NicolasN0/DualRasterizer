@@ -858,15 +858,17 @@ namespace dae {
 						ColorRGB glos = m_pTextureGloss->Sample(interpolatedUV);
 						ColorRGB spec = m_pTextureSpecular->Sample(interpolatedUV);
 						Vector3 glosVec{ glos.r,glos.g,glos.b };
-						Vector3 SpecVec{ spec.r,spec.g,spec.b };
+						Vector3 specVec{ spec.r,spec.g,spec.b };
 
 
-						float glosMag = glosVec.Magnitude();
-						float specMag = SpecVec.Magnitude();
-						float shininess{ 25 };
+						//float glosMag = glosVec.Magnitude();
+						//float specMag = SpecVec.Magnitude(); // Test without
+						//float shininess{ 25 };
 
 						//Vertex_Out interpolatedV = { interpolatedPos,interpolatedColor,interpolatedUV,interpolatedNormal,interpolatedTangent,interpolatedViewDir };
-						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specMag * shininess, glosMag * shininess);
+						//m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specMag /** shininess*/, glosMag /** shininess*/);
+						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specVec.x /** shininess*/, glosVec.x /** shininess*/);
+
 						if(m_IsShowingDepth)
 						{
 							float d = (2.0 * m_pCamera->m_NearPlane) / (m_pCamera->m_FarPlane + m_pCamera->m_NearPlane - interpolatedDepth * (m_pCamera->m_FarPlane - m_pCamera->m_NearPlane));
@@ -985,16 +987,20 @@ namespace dae {
 		}
 
 		case ShadingMode::Specular: {
-			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
-			return specular;
+			////const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			const ColorRGB specular{ BRDF::Phong(spec , glos * shininess , lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
+
+			return (specular * ObservedArea);
 		}
 
 		case ShadingMode::Combined: {
 			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
 			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
-			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			//const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
+
 			const ColorRGB phong{ diffuse + specular };
-			return phong;
+			return phong * ObservedArea;
 		}
 
 		default: {
@@ -1002,7 +1008,7 @@ namespace dae {
 			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
 			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
 			const ColorRGB phong{ diffuse + specular };
-			return phong;
+			return phong * ObservedArea;
 		}
 		}
 
