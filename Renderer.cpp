@@ -961,10 +961,24 @@ namespace dae {
 
 		//2. SET PIPELINE + INVOKE DRAWCALLS (= RENDER)
 		//...
+		//Update rasterstate to make up for overwrited state from .fx for flames
+		switch (m_RasterState)
+		{
+		case RasterState::None:
+			m_pDeviceContext->RSSetState(m_pDefaultState);
+			break;
+		case RasterState::Front:
+			m_pDeviceContext->RSSetState(m_pFrontCullState);
+			break;
+		case RasterState::Back:
+			m_pDeviceContext->RSSetState(m_pBackCullState);
+			break;
+		}
+
 		m_pVehicleMesh->Render(m_pDeviceContext);
 		if(m_IsShowingFire)
 		{
-			
+			//will set rasterstate back to none because gets overwritten in fx file
 		m_pCombustionMesh->Render(m_pDeviceContext);
 		}
 
