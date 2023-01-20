@@ -113,7 +113,7 @@ namespace dae
 		HRESULT InitializeDirectX();
         void RenderHardware() const;
         //Software
-        bool m_isRotating{false};
+        bool m_isRotating{true};
         bool m_HasNormalMap{true};
        
 

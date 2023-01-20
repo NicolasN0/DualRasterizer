@@ -51,14 +51,7 @@ namespace dae
 
 		bool m_IsBoosting{};
 		float m_BoostSpeed{40.f};
-	/*	void Initialize(float _fovAngle = 90.f, Vector3 _origin = {0.f,0.f,0.f})
-		{
-			fovAngle = _fovAngle;
-			fov = tanf((fovAngle * TO_RADIANS) / 2.f);
 
-			origin = _origin;
-			fov = tanf((fovAngle * TO_RADIANS) / 2.f);
-		}*/
 
 		void CalculateViewMatrix()
 		{
@@ -78,6 +71,7 @@ namespace dae
 			viewMatrix = invView;
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
 			//invViewMatrix = viewMatrix.Inverse();
+			viewMatrix.Inverse();
 			invViewMatrix = viewMatrix;
 			invViewMatrix.Inverse();
 		}
@@ -105,10 +99,6 @@ namespace dae
 
 		void Update(const Timer* pTimer)
 		{
-			/*const Vector3 forwardSpeed{ forward * pTimer->GetElapsed() * movementSpeed };
-			const Vector3 sideSpeed{ right * pTimer->GetElapsed() * movementSpeed };
-			const Vector3 upSpeed{ up * pTimer->GetElapsed() * movementSpeed };*/
-
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
@@ -119,14 +109,8 @@ namespace dae
 			{
 				m_IsBoosting = false;
 			}
-		/*	origin += pKeyboardState[SDL_SCANCODE_W] * forwardSpeed;
-			origin -= pKeyboardState[SDL_SCANCODE_S] * forwardSpeed;
 
-			origin += pKeyboardState[SDL_SCANCODE_SPACE] * upSpeed;
-			origin -= pKeyboardState[SDL_SCANCODE_LCTRL] * upSpeed;
 
-			origin += pKeyboardState[SDL_SCANCODE_D] * sideSpeed;
-			origin -= pKeyboardState[SDL_SCANCODE_A] * sideSpeed;*/
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{
 				if(m_IsBoosting)
@@ -186,14 +170,15 @@ namespace dae
 			if (SDL_BUTTON(mouseState) == 1)
 			{
 				//forward movement
-				origin -= forward * float(mouseY) * pTimer->GetElapsed() * movementSpeed *5.f;
+				origin -= forward * float(mouseY) * pTimer->GetElapsed() * movementSpeed;
 				//CameraMovement
-				totalYaw -= mouseX * rotspeed;
+				totalYaw += mouseX * rotspeed;
 			}
 
 			if (SDL_BUTTON(mouseState) == 16)
 			{
-				origin.y -= mouseY * pTimer->GetElapsed() * 100.f;
+				//std::cout << pTimer->GetElapsed();
+				origin.y -= mouseY * pTimer->GetElapsed() * 10.f;
 			}
 
 			//RotationMouse

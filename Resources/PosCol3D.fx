@@ -50,7 +50,8 @@ RasterizerState gRasterizerState
 
 RasterizerState gRasterizerStateDefault
 {
-   
+    CullMode = none;
+    FrontCounterClockwise = false;
 };
 
 BlendState gBlendState
@@ -345,7 +346,7 @@ technique11 FlatTechnique
 {
     pass P0
     {
-      //  SetRasterizerState(gRasterizerState);
+       // SetRasterizerState(gRasterizerStateDefault);
         SetDepthStencilState(gDepthStencilState, 0);
         SetBlendState(gBlendState, float4(0.0f, 0.0f, 0.0f, 0.0f), 0xFFFFFFFF);
         SetVertexShader(CompileShader(vs_5_0, VS()));
