@@ -83,8 +83,13 @@ namespace dae
 		/*int width = uv.x * m_pSurface->w;
 		int height = uv.y * m_pSurface->h;*/
 
-		int width = abs(uv.x) * m_pSurface->w;
-		int height = abs(uv.y) * m_pSurface->h;
+		/*int width = abs(uv.x) * m_pSurface->w;
+		int height = abs(uv.y) * m_pSurface->h;*/
+		int width = std::clamp(abs(uv.x), 0.f, 1.f) * float(m_pSurface->w);
+		int height = std::clamp(abs(uv.y),0.f,1.f) * float(m_pSurface->h);
+
+		//int width =  abs(uv.x) * m_pSurface->w;
+		//int height = abs(uv.y) * m_pSurface->h;
 
 		SDL_Color finalColor;
 
