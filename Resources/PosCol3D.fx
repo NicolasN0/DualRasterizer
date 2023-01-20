@@ -1,6 +1,8 @@
 float4x4 gWorldViewProj : WorldViewProjection;
-float4x4 gWorldMatrix : World;
-float3 gOnb : ViewInverse;
+//float4x4 gWorldMatrix : World;
+//float3 gOnb : ViewInverse; should be 4x4
+float4x4 gWorldMatrix : WORLD;
+float4x4 gViewInverse : VIEWINVERSE;
 
 Texture2D gDiffuseMap : DiffuseMap;
 Texture2D gGlossyMap : GlossyMap;
@@ -12,7 +14,8 @@ SamplerState gSamp;
 float3 lightDirection = float3(0.577f, -0.577f, 0.577f);
 float diffuseReflectance = 7.f; //kd
 float shininess = 25.f;
-float PI = 3.14;
+float PI = 3.14159265358979323846f;
+
 
 //
 // Sampler States
@@ -113,17 +116,39 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 Position : SV_POSITION;
-    float4 Color : COLOR0;
+    float4 WorldPosition : COLOR;
     float2 Uv : TEXCOORD0;
     float3 Normal : NORMAL;
     float3 Tangent : TANGENT;
 };
 
-float3 Phong(float3 ks, float exp, float3 l, float3 v, float3 n)
+float3 Phong(float3 ks, float3 exp, float3 l, float3 v, float3 n)
 {
-	float3 reflect = l - 2 * (dot(n,l) * n);
-	float cosa = dot(reflect, v);
-	return ks * pow(cosa, exp);
+	//float3 reflect = l - 2 * (dot(n,l) * n);
+	//float cosa = dot(reflect, v);
+	////return ks * pow(cosa, exp);
+ //   float phongSpecRef = ks * pow(cosa, exp);
+ //   float3 phongSpecRefColor = float3(phongSpecRef, phongSpecRef, phongSpecRef);
+ //   return phongSpecRefColor;
+
+   /* float3 reflect = l - (2 * (dot(n, l)) * n);
+    float angle = dot(reflect, v);
+    float phongSpecRef = ks * pow(max(0.f, angle), exp);
+    float3 phongSpecRefColor = float3(phongSpecRef, phongSpecRef, phongSpecRef);
+    return phongSpecRefColor;*/
+
+    //float3 reflect = l - (2 * (dot(n, l)) * n);
+    //float angle = dot(reflect, v);
+    ////float phongSpecRef = ks * pow(max(0.f, angle), exp);
+    //float3 phongSpecRef = ks * pow(max(0.f, angle), exp);
+
+    ////float3 color = float3( phongSpecRef,phongSpecRef,phongSpecRef );
+    //return phongSpecRef;
+    //return color;
+
+    float3 result = reflect(l, n);
+    float dotProduct = saturate(dot(result, v));
+    return ks * pow(dotProduct, exp);
 }
 
 float3 Lambert(float3 color)
@@ -138,9 +163,12 @@ VS_OUTPUT VS(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
     output.Position = mul(float4(input.Position, 1.f), gWorldViewProj);
-    output.Color = float4(input.Color, 1.f);
-    output.Normal = mul(normalize(input.Normal), (float3x3) gWorldMatrix);
-    output.Tangent = mul(normalize(input.Tangent), (float3x3) gWorldMatrix);
+   // output.Color = float4(input.Color, 1.f);
+    output.WorldPosition = mul(float4(input.Position, 1.f), gWorldMatrix);
+   /* output.Normal = mul(normalize(input.Normal), (float3x3) gWorldMatrix);
+    output.Tangent = mul(normalize(input.Tangent), (float3x3) gWorldMatrix);*/
+    output.Normal = mul(input.Normal, (float3x3) gWorldMatrix);
+    output.Tangent = mul(input.Tangent, (float3x3) gWorldMatrix);
     output.Uv = input.Uv;
     return output;
 }
@@ -150,133 +178,45 @@ VS_OUTPUT VS(VS_INPUT input)
 //
 float3 CalculatePixelShader(VS_OUTPUT input, float4 gloss, float4 spec, float4 color, float4 normals)
 {
-    float3 viewDir = (input.Position.rgb - gOnb);
+    //float3 viewDir = (input.Position.rgb - gOnb);
+    //float3 viewDir = normalize(input.Position.xyz - gOnb.xyz);
+    //float3 viewDir = normalize(gViewInverse[3].xyz - input.Position.xyz);
+    float3 viewDir = normalize(input.WorldPosition.xyz - gViewInverse[3].xyz);
+
     float3 binormal = cross(input.Normal, input.Tangent);
-    float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
-    float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);
+    /*float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
+    float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);*/
+    float4x3 tangentSpaceAxis = float4x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z,0,0,0);
+    normals = 2.f * normals - 1.f;
+    //float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis));
+    float3 computedNormals = mul(normals.rgb, tangentSpaceAxis);
+    computedNormals = computedNormals / 255.f;
+    //Lambert cosine law
+    float observedArea = saturate(dot(normalize(computedNormals), -normalize(lightDirection)));
+    //clamp(observedArea, 0, 1);
+    //observedArea = clamp(observedArea, 0, 1);
 
-    //Lambert cosine law (is correct)
-    float observedArea = saturate(dot(computedNormals, -lightDirection));
-    clamp(observedArea, 0, 1);
-
-    //diffuse (is correct)
-    float3 diffuse = Lambert(color.rgb) * observedArea;
+    //diffuse
+    //float3 diffuse = Lambert(color.rgb) * observedArea;
+    float3 diffuse = Lambert(color.rgb);
 
     //specular
-    float3 specular = saturate(Phong(spec.rgb, gloss.x * shininess, -lightDirection, normalize(viewDir), computedNormals));
-
+    //float3 specular = saturate(Phong(spec.rgb, gloss.x * shininess, -lightDirection, normalize(viewDir), computedNormals));
+    float3 specular = Phong(spec.rgb, gloss.x * shininess, normalize(-lightDirection), normalize(viewDir), normalize(computedNormals));
+   // float3 specular = Phong(spec.rgb, gloss.x * shininess, normalize(-lightDirection), float3(1.f, 1.f, 1.f), normalize(computedNormals));
+    float3 ambient = float3(0.025f, 0.025f, 0.025f);
     //phong
     float3 phong = diffuse + specular;
-    return phong;
+    float3 phongCombined = phong * observedArea;
+    //return observedArea;
+    //return specular * observedArea;
+    //return phongCombined + ambient;
+    //return /*ambient +*/ phongCombined * observedArea;
+    return ambient + phongCombined;
 }
 
-//float4 PS1(VS_OUTPUT input) : SV_TARGET
-//{
-//    //maps
-//    float4 gloss = gGlossyMap.Sample(samPoint, input.Uv);
-//    float4 spec = gSpecularMap.Sample(samPoint, input.Uv);
-//    float4 color = gDiffuseMap.Sample(samPoint, input.Uv);
-//    float4 normals = gNormalMap.Sample(samPoint, input.Uv);
-//
-//    float3 viewDir = (input.Position.rgb - gOnb);
-//    float3 binormal = cross(input.Normal, input.Tangent);
-//    float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
-//    float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);
-//
-//    //Lambert cosine law (is correct)
-//    float observedArea = saturate(dot(computedNormals, -lightDirection));
-//    clamp(observedArea, 0, 1);
-//
-//    //diffuse (is correct)
-//    float3 diffuse = Lambert(color.rgb) * observedArea;
-//
-//    ////specular
-//    //float3 specular = saturate(Phong(spec.rgb, gloss.x * shininess, -lightDirection, normalize(viewDir), computedNormals));
-//
-//    ////phong
-//    //float3 phong = diffuse + specular;
-//
-//    float4 output;
-//    //output.rgb = (observedArea, observedArea, observedArea);
-//    output.rgb = diffuse;
-//    //output.rgb = specular;
-//    //output.rgb = phong * observedArea;
-//    output.a = 1;
-//    return output;
-//}
-//
-////specular
-//float4 PS2(VS_OUTPUT input) : SV_TARGET
-//{
-//    //maps
-//     float4 gloss = gGlossyMap.Sample(samPoint, input.Uv);
-//     float4 spec = gSpecularMap.Sample(samPoint, input.Uv);
-//     float4 color = gDiffuseMap.Sample(samPoint, input.Uv);
-//     float4 normals = gNormalMap.Sample(samPoint, input.Uv);
-//
-//     float3 viewDir = (input.Position.rgb - gOnb);
-//     float3 binormal = cross(input.Normal, input.Tangent);
-//     float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
-//     float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);
-//
-//     //Lambert cosine law (is correct)
-//     float observedArea = saturate(dot(computedNormals, -lightDirection));
-//     clamp(observedArea, 0, 1);
-//
-//     //diffuse (is correct)
-//     float3 diffuse = Lambert(color.rgb) * observedArea;
-//
-//     //specular
-//     float3 specular = saturate(Phong(spec.rgb, gloss.x * shininess, -lightDirection, normalize(viewDir), computedNormals));
-//
-//     ////phong
-//     //float3 phong = diffuse + specular;
-//
-//     float4 output;
-//     //output.rgb = (observedArea, observedArea, observedArea);
-//     //output.rgb = diffuse;
-//     output.rgb = specular;
-//     //output.rgb = phong * observedArea;
-//     output.a = 1;
-//     return output;
-//}
-//
-////phong
-//float4 PS3(VS_OUTPUT input) : SV_TARGET
-//{
-//    //maps
-//    float4 gloss = gGlossyMap.Sample(samPoint, input.Uv);
-//    float4 spec = gSpecularMap.Sample(samPoint, input.Uv);
-//    float4 color = gDiffuseMap.Sample(samPoint, input.Uv);
-//    float4 normals = gNormalMap.Sample(samPoint, input.Uv);
-//
-//    float3 viewDir = (input.Position.rgb - gOnb);
-//    float3 binormal = cross(input.Normal, input.Tangent);
-//    float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
-//    float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);
-//
-//    //Lambert cosine law (is correct)
-//    float observedArea = saturate(dot(computedNormals, -lightDirection));
-//    clamp(observedArea, 0, 1);
-//
-//    //diffuse (is correct)
-//    float3 diffuse = Lambert(color.rgb) * observedArea;
-//
-//    //specular
-//    float3 specular = saturate(Phong(spec.rgb, gloss.x * shininess, -lightDirection, normalize(viewDir), computedNormals));
-//
-//    //phong
-//    float3 phong = diffuse + specular;
-//
-//    float4 output;
-//    //output.rgb = (observedArea, observedArea, observedArea);
-//    //output.rgb = diffuse * observedArea;
-//    //output.rgb = specular;
-//    output.rgb = phong;
-//    output.a = 1;
-//    return output;
-//}
 
+//Point
 float4 PS1(VS_OUTPUT input) : SV_TARGET
 {
     //maps
@@ -285,13 +225,17 @@ float4 PS1(VS_OUTPUT input) : SV_TARGET
     float4 color = gDiffuseMap.Sample(samPoint, input.Uv);
     float4 normals = gNormalMap.Sample(samPoint, input.Uv);
 
-    float4 output;
-    output.rgb = CalculatePixelShader(input, gloss, spec, color, normals);
-    output.a = 1;
-    return output;
+    //float4 output;
+    float3 output;
+
+    //output.rgb = CalculatePixelShader(input, gloss, spec, color, normals);
+    //output.a = 1;
+    output = CalculatePixelShader(input, gloss, spec, color, normals);
+   // return output;
+    return float4(output, 1.f);
 }
 
-////specular
+////Linear
 float4 PS2(VS_OUTPUT input) : SV_TARGET
 {
     //maps
@@ -306,7 +250,7 @@ float4 PS2(VS_OUTPUT input) : SV_TARGET
      return output;
 }
 
-//phong
+//Ani
 float4 PS3(VS_OUTPUT input) : SV_TARGET
 {
     //maps
@@ -329,7 +273,7 @@ float4 PS4(VS_OUTPUT input) : SV_TARGET
     float4 color = gDiffuseMap.Sample(samPoint, input.Uv);
     float4 normals = gNormalMap.Sample(samPoint, input.Uv);
 
-    float3 viewDir = (input.Position.rgb - gOnb);
+    float3 viewDir = (input.Position.rgb - gViewInverse[3]);
     float3 binormal = cross(input.Normal, input.Tangent);
     float3x3 tangentSpaceAxis = float3x3(input.Tangent.x, input.Tangent.y, input.Tangent.z, binormal.x, binormal.y, binormal.z, input.Normal.x, input.Normal.y, input.Normal.z);
     float3 computedNormals = normalize(mul(normals.rgb, tangentSpaceAxis) + input.Normal);

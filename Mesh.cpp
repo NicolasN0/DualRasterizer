@@ -43,7 +43,6 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices,std::vecto
 	D3DX11_PASS_DESC passDesc{};
 	m_pTechnique->GetPassByIndex(0)->GetDesc(&passDesc);
 
-	/*const HRESULT result = pDevice->CreateInputLayout(*/
 	HRESULT result = pDevice->CreateInputLayout(
 		vertexDesc,
 		numElements,
@@ -103,6 +102,8 @@ Mesh::~Mesh()
 
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
+	//Updata matrix data here?
+
 	//1. set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -129,7 +130,7 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 
 
 
-void Mesh::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos)
+void Mesh::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Matrix* cameraPos)
 {
 	m_pEffect->SetMatrix(matrix, worldMatrix, cameraPos);
 }

@@ -77,7 +77,9 @@ namespace dae
 			invViewMatrix = obn;
 			viewMatrix = invView;
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
-			invViewMatrix = viewMatrix.Inverse();
+			//invViewMatrix = viewMatrix.Inverse();
+			invViewMatrix = viewMatrix;
+			invViewMatrix.Inverse();
 		}
 
 		void CalculateProjectionMatrix()

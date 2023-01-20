@@ -46,7 +46,7 @@ public:
     Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices, std::vector<uint32_t> indices);
     ~Mesh();
 
-    void SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos);
+    void SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Matrix* cameraPos);
     void SetWorldMatrix(dae::Matrix matrix) { m_WorldMatrix = matrix; };
     void Render(ID3D11DeviceContext* pDeviceContext);
 

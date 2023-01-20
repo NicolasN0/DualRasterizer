@@ -42,9 +42,9 @@ Effect::Effect(ID3D11Device* device, const std::wstring& assetFile)
 		std::wcout << L"m_pWorldMatrix is not valid! \n";
 	}
 
-	m_pOnbMatrix = m_pEffect->GetVariableByName("gOnb")->AsVector();
-	if (!m_pOnbMatrix->IsValid()) {
-		std::wcout << L"m_pOnbMatrix is not valid! \n";
+	m_pInverseViewMatrix = m_pEffect->GetVariableByName("gViewInverse")->AsMatrix();
+	if (!m_pInverseViewMatrix->IsValid()) {
+		std::wcout << L"m_pInverseViewMatrix is not valid! \n";
 	}
 
 	//Samplers
@@ -76,8 +76,8 @@ Effect::~Effect()
 	m_pWorldViewProjMatrix->Release();
 	m_pWorldViewProjMatrix = nullptr;
 
-	m_pOnbMatrix->Release();
-	m_pOnbMatrix = nullptr;
+	m_pInverseViewMatrix->Release();
+	m_pInverseViewMatrix = nullptr;
 
 	m_pEffect->GetVariableByName("gWorldViewProj")->Release();
 	m_pEffect->GetVariableByName("gDiffuseMap")->Release();
@@ -85,7 +85,7 @@ Effect::~Effect()
 	m_pEffect->GetVariableByName("gNormalMap")->Release();
 	m_pEffect->GetVariableByName("gSpecularMap")->Release();
 	m_pEffect->GetVariableByName("gWorldMatrix")->Release();
-	m_pEffect->GetVariableByName("gOnb")->Release();
+	m_pEffect->GetVariableByName("gViewInverse")->Release();
 
 	m_pEffect->GetTechniqueByName("DefaultTechnique")->Release();
 	m_pEffect->GetTechniqueByName("LinearTechnique")->Release();
@@ -162,10 +162,11 @@ void Effect::UpdateData(dae::Matrix* worldViewProjection)
 }
 
 
-void Effect::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Vector3* cameraPos) {
+void Effect::SetMatrix(const dae::Matrix* matrix, const dae::Matrix* worldMatrix, const dae::Matrix* cameraPos)
+{
 	m_pWorldViewProjMatrix->SetMatrix(reinterpret_cast<const float*>(matrix));
 	m_pWorldMatrix->SetMatrix(reinterpret_cast<const float*>(worldMatrix));
-	m_pOnbMatrix->SetFloatVector(reinterpret_cast<const float*>(cameraPos));
+	m_pInverseViewMatrix->SetMatrix(reinterpret_cast<const float*>(cameraPos));
 }
 
 void Effect::SetMaps(dae::Texture* pDiffuseTexture, dae::Texture* pSpecularMap, dae::Texture* pNormalMap, dae::Texture* pGlossMap)

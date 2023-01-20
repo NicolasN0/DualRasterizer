@@ -104,10 +104,10 @@ namespace dae {
 		m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 
 		//Vehicle
-		m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
 
 		//Fire
-		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
 		m_pCombustionMesh->m_pEffect->ChangeEffect("FlatTechnique");
 	}
 
@@ -172,16 +172,26 @@ namespace dae {
 		{
 			m_Rot = pTimer->GetTotal() * (45 * PI / 180);
 
-			m_RotMatrix = Matrix::CreateRotationY(m_Rot);
-			m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-			m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-			//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
-			m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
+			//m_RotMatrix = Matrix::CreateRotationY(m_Rot);
+			//m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+			//m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+			////m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+			//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
 
-			m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
-			m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
+			//m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
+			//m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
 
 		}
+		m_RotMatrix = Matrix::CreateRotationY(m_Rot);
+		m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+		m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
+		//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
+		m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
+
+		/*m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
+		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);*/
+		m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
+		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
 	}
 
 
@@ -839,7 +849,7 @@ namespace dae {
 					
 						Vector3 binormal = Vector3::Cross(interpolatedNormal, interpolatedTangent);
 						Matrix tangentSpaceAxis = Matrix{ interpolatedTangent,binormal,interpolatedNormal,Vector3::Zero };
-						//Sample from normal map like color (slides say sampled in 255 but already sampled in 0-1 here?)
+						
 
 
 						ColorRGB interpolatedNormalMap{ m_pTextureNormal->Sample(interpolatedUV) };
@@ -964,11 +974,20 @@ namespace dae {
 
 	ColorRGB Renderer::PixelShading(const Vertex_PosColOut& v, float spec, float glos) const
 	{
-		constexpr float kd{ 7.f }; // = diffuse reflectance = diffuse specularity
+
+		//kd should be between 0-1
+		constexpr float kd{ 7.f }; // = diffuse reflectance / intensity
+
 		constexpr float shininess{ 25.f };
+
+		ColorRGB ambient{ .025f, .025f, .025f };
 		Vector3 lightDirection = { .577f, -.577f, .577f };
+		constexpr float lightIntensity{ 7.f };
+		//ColorRGB irradiance{ambient.r + lightIntensity,ambient.g + lightIntensity, ambient.b + lightIntensity};
+
 		//Lambert
 		float ObservedArea{ Vector3::Dot(v.Normal.Normalized(), -lightDirection.Normalized()) };
+		
 		ObservedArea = Clamp(ObservedArea, 0.f, 1.f);
 
 
@@ -995,18 +1014,32 @@ namespace dae {
 
 		case ShadingMode::Combined: {
 			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
-			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
+
+		//	Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), 1) };
+			const ColorRGB diffuse{ material.Shade(v) /** ObservedArea */};
 			//const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
 			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
 
 			const ColorRGB phong{ diffuse + specular };
-			return phong * ObservedArea;
+			//return /*ambient +*/ phong * ObservedArea;
+			//return irradiance * phong * ObservedArea;
+			return ambient + phong * ObservedArea;
+			//return ColorRGB(glos, glos , glos );
+
+			//return ColorRGB(v.Pos.x * 255, v.Pos.y * 255, v.Pos.z * 255);
+			//return ColorRGB(m_pCamera->origin.Normalized().x, m_pCamera->origin.Normalized().y, m_pCamera->origin.Normalized().z) * 255.f;
 		}
 
 		default: {
-			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+		/*	Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
 			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
 			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
+			const ColorRGB phong{ diffuse + specular };
+			return phong * ObservedArea;*/
+
+			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+			const ColorRGB diffuse{ material.Shade(v)};
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
 			const ColorRGB phong{ diffuse + specular };
 			return phong * ObservedArea;
 		}
