@@ -75,8 +75,9 @@ namespace dae
 	{
 		//TODO
 
-		int width = std::clamp(abs(uv.x), 0.f, 1.f) * float(m_pSurface->w);
-		int height = std::clamp(abs(uv.y),0.f,1.f) * float(m_pSurface->h);
+		const int width =  static_cast<int>( std::clamp(abs(uv.x), 0.f, 1.f) * float(m_pSurface->w));
+		const int height = static_cast<int>(std::clamp(abs(uv.y),0.f,1.f) * float(m_pSurface->h));
+
 
 		SDL_Color finalColor{};
 

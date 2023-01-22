@@ -156,13 +156,25 @@ namespace dae {
 		}
 
 		//delete m_PRenderTargetView;
+		m_PRenderTargetView->Release();
+		m_pRenderTargetBuffer->Release();
+		m_pDepthStencilBuffer->Release();
+		m_pDepthStencilView->Release();
 		//delete m_pRenderTargetBuffer;
 		//delete m_pDepthStencilView;
 		//delete m_pDepthStencilBuffer;
 		//delete m_pSwapChain;
 		m_pSwapChain->Release();
 		//delete m_pDeviceContext;
-		//delete m_pDevice;
+		m_pDevice->Release();
+
+		m_pDefaultState->Release();
+		m_pFrontCullState->Release();
+		m_pBackCullState->Release();
+
+		m_pPointSample->Release();
+		m_pLinearSample->Release();
+		m_pAnisotropicSample->Release();
 		
 	}
 
