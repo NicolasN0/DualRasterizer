@@ -409,7 +409,7 @@ namespace dae {
 
 	
 
-	void Renderer::ShowKeybindings()
+	void Renderer::ShowKeybindings() const
 	{
 		
 		SetConsoleTextAttribute(m_Handle, 14);

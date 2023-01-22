@@ -107,7 +107,7 @@ namespace dae
         Matrix m_RotMatrix{};
         Matrix m_ScaleMatrix{};
 
-        void ShowKeybindings();
+        void ShowKeybindings() const;
 
 		//DIRECTX
 		HRESULT InitializeDirectX();
@@ -126,7 +126,7 @@ namespace dae
         void RenderSoftware() const;
 
         void RenderTriangle(std::vector<Vertex_PosColOut> newTriangle) const;
-        void VertexTransformationFunction(const std::vector<Vertex_PosCol>& vertices_in, std::vector<Vertex_PosColOut>& vertices_out, Matrix worldMatrix) const; //W1 Version
+        void VertexTransformationFunction(const std::vector<Vertex_PosCol>& vertices_in, std::vector<Vertex_PosColOut>& vertices_out, Matrix worldMatrix) const; 
         ColorRGB PixelShading(const Vertex_PosColOut& v, float spec, float glos) const;
 
 		//...
