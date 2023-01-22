@@ -155,17 +155,11 @@ namespace dae {
 			m_pDeviceContext->Release();
 		}
 
-		//delete m_PRenderTargetView;
 		m_PRenderTargetView->Release();
 		m_pRenderTargetBuffer->Release();
 		m_pDepthStencilBuffer->Release();
 		m_pDepthStencilView->Release();
-		//delete m_pRenderTargetBuffer;
-		//delete m_pDepthStencilView;
-		//delete m_pDepthStencilBuffer;
-		//delete m_pSwapChain;
 		m_pSwapChain->Release();
-		//delete m_pDeviceContext;
 		m_pDevice->Release();
 
 		m_pDefaultState->Release();
