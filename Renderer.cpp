@@ -866,7 +866,7 @@ namespace dae {
 
 						if(m_IsShowingDepth)
 						{
-							float d = static_cast<float>((2.0 * m_pCamera->m_NearPlane) / (m_pCamera->m_FarPlane + m_pCamera->m_NearPlane - interpolatedDepth * (m_pCamera->m_FarPlane - m_pCamera->m_NearPlane)));
+							float d = static_cast<float>((2.0 * m_pCamera->nearPlane) / (m_pCamera->farPlane + m_pCamera->nearPlane - interpolatedDepth * (m_pCamera->farPlane - m_pCamera->nearPlane)));
 							m_ColorBuffer[curPixel] = ColorRGB{ d,d,d };
 						}
 					}

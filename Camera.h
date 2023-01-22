@@ -43,12 +43,12 @@ namespace dae
 		Matrix viewMatrix{};
 		Vector3 origin{ 0,0,0 };
 
-		const float m_NearPlane = 0.1f;
-		const float m_FarPlane = 100.f;
+		const float nearPlane = 0.1f;
+		const float farPlane = 100.f;
 
-		bool m_IsBoosting{};
-		float m_BoostSpeed{40.f};
-
+		bool isBoosting{};
+		float boostSpeed{40.f};
+		float maxJumpLength{ 10.f };
 
 		void CalculateViewMatrix()
 		{
@@ -74,7 +74,7 @@ namespace dae
 
 		void CalculateProjectionMatrix()
 		{
-			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, m_NearPlane, m_FarPlane);
+			projectionMatrix = Matrix::CreatePerspectiveFovLH(fov, aspectRatio, nearPlane, farPlane);
 		};
 
 		Matrix GetViewMatrix()
@@ -100,19 +100,19 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_LSHIFT])
 			{
 				
-				m_IsBoosting = true;
+				isBoosting = true;
 			} else
 			{
-				m_IsBoosting = false;
+				isBoosting = false;
 			}
 
 
 			if (pKeyboardState[SDL_SCANCODE_W])
 			{
-				if(m_IsBoosting)
+				if(isBoosting)
 				{
 					
-					origin += forward * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed) ;
+					origin += forward * pTimer->GetElapsed() * (movementSpeed + boostSpeed) ;
 				} else
 				{
 					origin += forward * pTimer->GetElapsed() * movementSpeed;
@@ -121,9 +121,9 @@ namespace dae
 			}
 			if (pKeyboardState[SDL_SCANCODE_S])
 			{
-				if (m_IsBoosting)
+				if (isBoosting)
 				{
-					origin -= forward * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+					origin -= forward * pTimer->GetElapsed() * (movementSpeed + boostSpeed);
 				}
 				else
 				{
@@ -133,9 +133,9 @@ namespace dae
 			}
 			if (pKeyboardState[SDL_SCANCODE_A])
 			{
-				if (m_IsBoosting)
+				if (isBoosting)
 				{
-					origin -= rightLocal * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+					origin -= rightLocal * pTimer->GetElapsed() * (movementSpeed + boostSpeed);
 				}else
 				{
 					origin -= rightLocal * pTimer->GetElapsed() * movementSpeed;
@@ -144,9 +144,9 @@ namespace dae
 			}
 			if (pKeyboardState[SDL_SCANCODE_D])
 			{
-				if (m_IsBoosting)
+				if (isBoosting)
 				{
-					origin += rightLocal * pTimer->GetElapsed() * (movementSpeed + m_BoostSpeed);
+					origin += rightLocal * pTimer->GetElapsed() * (movementSpeed + boostSpeed);
 				}else
 				{
 					origin += rightLocal * pTimer->GetElapsed() * movementSpeed;
@@ -173,7 +173,7 @@ namespace dae
 
 			if (SDL_BUTTON(mouseState) == 16)
 			{
-				origin.y -= mouseY * pTimer->GetElapsed() * 10.f;
+				origin.y -= std::clamp(mouseY * pTimer->GetElapsed() * 20.f,-maxJumpLength,maxJumpLength);
 			}
 
 			//RotationMouse
