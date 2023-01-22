@@ -8,7 +8,6 @@ Effect::Effect(ID3D11Device* device, const std::wstring& assetFile)
 	
 
 	//technique
-	//m_pTechnique = m_pEffect->GetTecniqueByIndex(0);
 	m_pTechnique = m_pEffect->GetTechniqueByName("DefaultTechnique");
 	if (!m_pTechnique->IsValid())
 		std::wcout << L"Technique is not valid\n";

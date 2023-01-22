@@ -20,7 +20,7 @@ namespace dae {
 		m_pFrontBuffer = SDL_GetWindowSurface(pWindow);
 		m_pBackBuffer = SDL_CreateRGBSurface(0, m_Width, m_Height, 32, 0, 0, 0, 0);
 		m_pBackBufferPixels = (uint32_t*)m_pBackBuffer->pixels;
-		//m_pDepthBufferPixels = new float[m_Width * m_Height];
+	
 		int size{ m_Width * m_Height };
 		m_ColorBuffer = new ColorRGB[size];
 		for (int i{ 0 }; i < size; i++)
@@ -97,7 +97,7 @@ namespace dae {
 		const float screenHeight{ static_cast<float>(m_Height) };
 
 
-		//m_pCamera = new Camera(Vector3{ 0.f, 0.f, -50.f }, 45.f);
+	
 		m_pCamera = new Camera(Vector3{ 0.f, 0.f, 0.f }, 45.f);
 
 		m_pCamera->aspectRatio = screenWidth / screenHeight;
@@ -152,6 +152,7 @@ namespace dae {
 		{
 			m_pDeviceContext->ClearState();
 			m_pDeviceContext->Flush();
+			m_pDeviceContext->Release();
 		}
 
 		//delete m_PRenderTargetView;
@@ -162,6 +163,7 @@ namespace dae {
 		m_pSwapChain->Release();
 		//delete m_pDeviceContext;
 		//delete m_pDevice;
+		
 	}
 
 	void Renderer::Update(const Timer* pTimer)
@@ -171,25 +173,13 @@ namespace dae {
 		if(m_isRotating)
 		{
 			m_Rot = pTimer->GetTotal() * (45 * PI / 180);
-
-			//m_RotMatrix = Matrix::CreateRotationY(m_Rot);
-			//m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-			//m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-			////m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
-			//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
-
-			//m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
-			//m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);
-
 		}
+
 		m_RotMatrix = Matrix::CreateRotationY(m_Rot);
 		m_pVehicleMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 		m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
-		//m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->GetProjectionMatrix();
 		m_pCamera->worldViewProjMatrix = m_pVehicleMesh->m_WorldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
 
-		/*m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->origin);
-		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->origin);*/
 		m_pVehicleMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pVehicleMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
 		m_pCombustionMesh->SetMatrix(&m_pCamera->worldViewProjMatrix, &m_pCombustionMesh->m_WorldMatrix, &m_pCamera->invViewMatrix);
 	}
@@ -529,7 +519,7 @@ namespace dae {
 		//=====
 		m_pDeviceContext->OMSetRenderTargets(1, &m_PRenderTargetView, m_pDepthStencilView);
 
-		//Extra Rasterizer States?
+		//Extra Rasterizer States
 		D3D11_RASTERIZER_DESC defaultCull{};
 		defaultCull.FillMode = D3D11_FILL_SOLID; //?
 		defaultCull.CullMode = D3D11_CULL_NONE;
@@ -545,7 +535,6 @@ namespace dae {
 		result = m_pDevice->CreateRasterizerState(&defaultCull,&m_pDefaultState);
 		if (FAILED(result))
 			return result;
-		//m_pDeviceContext->RSSetState(m_pDefaultState);
 
 		D3D11_RASTERIZER_DESC frontCull{};
 		frontCull.FillMode = D3D11_FILL_SOLID; //?
@@ -582,7 +571,7 @@ namespace dae {
 
 
 
-		//Extra Sampler States?
+		//Extra Sampler States
 		D3D11_SAMPLER_DESC PointSamp{};
 		PointSamp.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		PointSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -650,7 +639,6 @@ namespace dae {
 		viewport.MinDepth = 0.f;
 		viewport.MaxDepth = 1.f;
 		m_pDeviceContext->RSSetViewports(1, &viewport);
-		//return S_FALSE;
 
 		//here?
 		pDxgiFactory->Release();
@@ -670,7 +658,6 @@ namespace dae {
 	
 		for (int i{ 0 }; i < size; i++)
 		{
-		/*	m_ColorBuffer[i] = colors::Black;*/
 			if(m_IsUniformColor)
 			{
 				m_ColorBuffer[i] = m_UniformCol;
@@ -745,10 +732,6 @@ namespace dae {
 			{
 				for (int py{ static_cast<int>(minY) }; py < std::ceil(maxY); ++py)
 				{
-		/*	for (int px{ 0 }; px < m_Width; ++px)
-			{
-				for (int py{ 0 }; py < m_Height; ++py)
-				{*/
 					float gradient = px / static_cast<float>(m_Width);
 					gradient += py / static_cast<float>(m_Width);
 					gradient /= 2.0f;
@@ -811,6 +794,7 @@ namespace dae {
 
 						//Deciding color
 						float interpolatedDepthW{ 1 / ((1 / newTriangle[0].Pos.w) * W1 + (1 / newTriangle[1].Pos.w) * W2 + (1 / newTriangle[2].Pos.w) * W3) };
+
 						Vector2 interpolatedUV{
 							(((newTriangle[0].Uv / newTriangle[0].Pos.w) * W1) +
 							((newTriangle[1].Uv / newTriangle[1].Pos.w) * W2) +
@@ -871,17 +855,12 @@ namespace dae {
 						Vector3 specVec{ spec.r,spec.g,spec.b };
 
 
-						//float glosMag = glosVec.Magnitude();
-						//float specMag = SpecVec.Magnitude(); // Test without
-						//float shininess{ 25 };
-
-						//Vertex_Out interpolatedV = { interpolatedPos,interpolatedColor,interpolatedUV,interpolatedNormal,interpolatedTangent,interpolatedViewDir };
-						//m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specMag /** shininess*/, glosMag /** shininess*/);
-						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specVec.x /** shininess*/, glosVec.x /** shininess*/);
+					
+						m_ColorBuffer[curPixel] = PixelShading(interpolatedV, specVec.x , glosVec.x );
 
 						if(m_IsShowingDepth)
 						{
-							float d = (2.0 * m_pCamera->m_NearPlane) / (m_pCamera->m_FarPlane + m_pCamera->m_NearPlane - interpolatedDepth * (m_pCamera->m_FarPlane - m_pCamera->m_NearPlane));
+							float d = static_cast<float>((2.0 * m_pCamera->m_NearPlane) / (m_pCamera->m_FarPlane + m_pCamera->m_NearPlane - interpolatedDepth * (m_pCamera->m_FarPlane - m_pCamera->m_NearPlane)));
 							m_ColorBuffer[curPixel] = ColorRGB{ d,d,d };
 						}
 					}
@@ -896,20 +875,20 @@ namespace dae {
 						static_cast<uint8_t>(finalColor.b * 255));
 				}
 			}
-		} // from bounding box
+		} 
 	}
+
 	void Renderer::VertexTransformationFunction(const std::vector<Vertex_PosCol>& vertices_in, std::vector<Vertex_PosColOut>& vertices_out, Matrix worldMatrix) const
 	{
 		vertices_out.clear();
 		float aspectRatio = { m_Width / static_cast<float>(m_Height) };
-		//m_Camera.viewMatrix;
 		Matrix end = worldMatrix * m_pCamera->viewMatrix * m_pCamera->projectionMatrix;
 		for (int i{}; i < vertices_in.size(); i++)
 		{
 			Vertex_PosCol pWorld{};
 			Vertex_PosColOut p{};
 			//To view Space
-			//Multiply all the vertices with the m_camera.viewMatrix(which is actualy the onb inverse)
+		
 			pWorld = vertices_in[i];
 			Vector4 pos{ pWorld.Pos.x,pWorld.Pos.y,pWorld.Pos.z,1 };
 			Vertex_PosColOut pView{};
@@ -934,7 +913,6 @@ namespace dae {
 			p.Tangent = worldMatrix.TransformVector(vertices_in[i].Tangent);
 
 			//calculateViewDirectionToo
-			/*p.viewDirection = Vector3{ m_pCamera->origin - p.Pos.GetXYZ() };*/
 			p.viewDirection = Vector3{ m_pCamera->origin - pView.Pos };
 			vertices_out.push_back(p);
 		}
@@ -946,8 +924,6 @@ namespace dae {
 		if (!m_IsInitialized)
 			return;
 		//1. CLEAR RTV & DSV
-		
-	/*	ColorRGB clearColor = ColorRGB{ 0.39f,0.59f,0.93f };*/
 		ColorRGB clearColor;
 		if(m_IsUniformColor)
 		{
@@ -988,20 +964,16 @@ namespace dae {
 
 	ColorRGB Renderer::PixelShading(const Vertex_PosColOut& v, float spec, float glos) const
 	{
-
-		//kd should be between 0-1
 		constexpr float kd{ 7.f }; // = diffuse reflectance / intensity
 
 		constexpr float shininess{ 25.f };
 
 		ColorRGB ambient{ .025f, .025f, .025f };
 		Vector3 lightDirection = { .577f, -.577f, .577f };
-		constexpr float lightIntensity{ 7.f };
-		//ColorRGB irradiance{ambient.r + lightIntensity,ambient.g + lightIntensity, ambient.b + lightIntensity};
+	
 
 		//Lambert
 		float ObservedArea{ Vector3::Dot(v.Normal.Normalized(), -lightDirection.Normalized()) };
-		
 		ObservedArea = Clamp(ObservedArea, 0.f, 1.f);
 
 
@@ -1011,52 +983,43 @@ namespace dae {
 		{
 		case ShadingMode::ObservedArea: {
 			return ColorRGB{ ObservedArea,ObservedArea,ObservedArea };
-		}
+			}
 
 		case ShadingMode::Diffuse: {
 			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
 			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
 			return diffuse;
-		}
+			}
 
 		case ShadingMode::Specular: {
-			////const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
 			const ColorRGB specular{ BRDF::Phong(spec , glos * shininess , lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
 
 			return (specular * ObservedArea);
-		}
+			}
 
 		case ShadingMode::Combined: {
 			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
 
-		//	Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), 1) };
-			const ColorRGB diffuse{ material.Shade(v) /** ObservedArea */};
-			//const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
-			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
-
-			const ColorRGB phong{ diffuse + specular };
-			//return /*ambient +*/ phong * ObservedArea;
-			//return irradiance * phong * ObservedArea;
-			return ambient + phong * ObservedArea;
-			//return ColorRGB(glos, glos , glos );
-
-			//return ColorRGB(v.Pos.x * 255, v.Pos.y * 255, v.Pos.z * 255);
-			//return ColorRGB(m_pCamera->origin.Normalized().x, m_pCamera->origin.Normalized().y, m_pCamera->origin.Normalized().z) * 255.f;
-		}
-
-		default: {
-		/*	Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
-			const ColorRGB diffuse{ material.Shade(v) * ObservedArea };
-			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection, v.viewDirection, v.Normal) };
-			const ColorRGB phong{ diffuse + specular };
-			return phong * ObservedArea;*/
-
-			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
 			const ColorRGB diffuse{ material.Shade(v)};
 			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
+
 			const ColorRGB phong{ diffuse + specular };
-			return phong * ObservedArea;
-		}
+			
+			return ambient + phong * ObservedArea;
+			
+			}
+
+		default: {
+		
+			Material_Lambert material{ Material_Lambert(ColorRGB(v.Color.x,v.Color.y,v.Color.z), kd) };
+
+			const ColorRGB diffuse{ material.Shade(v) };
+			const ColorRGB specular{ BRDF::Phong(spec, glos * shininess, lightDirection.Normalized(), v.viewDirection.Normalized(), v.Normal.Normalized()) };
+
+			const ColorRGB phong{ diffuse + specular };
+
+			return ambient + phong * ObservedArea;
+			}
 		}
 
 	}

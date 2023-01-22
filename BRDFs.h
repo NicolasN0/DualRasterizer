@@ -36,18 +36,10 @@ namespace dae
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
 			//todo: W3
-		//	std::cout << Vector3::Dot(n, -l) << std::endl;
-			//Vector3 reflect = -l - (2 * (Vector3::Dot(-n, -l)) * -n);
 			Vector3 reflect = l - (2 * (Vector3::Dot(n, l)) * n);
-
-			//std::cout << Vector3::Dot(n, reflect) << std::endl;
-			//std::cout << std::endl;
 			float angle = Vector3::Dot(reflect, v);
 			float phongSpecRef = ks * powf(std::max(0.f,angle), exp);
-			//float phongSpecRef = ks * powf( angle, exp);
-			//std::cout << phongSpecRef << std::endl;
 			ColorRGB color { phongSpecRef,phongSpecRef,phongSpecRef };
-			
 			return color;
 
 			
@@ -79,7 +71,6 @@ namespace dae
 		{
 			float dotSquared = Square(Vector3::Dot(n, h));
 			float B = Square(roughness) - 1;
-
 			return Square(roughness) / (PI * Square(dotSquared * B + 1));
 		}
 
@@ -94,8 +85,6 @@ namespace dae
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
 			//todo: W3
-			
-			
 			float k = Square(roughness + 1) / 8;
 			float top = Vector3::Dot(n, v);
 			if(top < 0) return 0;

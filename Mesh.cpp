@@ -65,7 +65,6 @@ Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices,std::vecto
 	D3D11_SUBRESOURCE_DATA initData = {};
 	initData.pSysMem = vertices.data();
 
-	/*HRESULT result = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);*/
 	result = pDevice->CreateBuffer(&bd, &initData, &m_pVertexBuffer);
 	if (FAILED(result))
 		return;
@@ -102,13 +101,11 @@ Mesh::~Mesh()
 
 void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 {
-	//Updata matrix data here?
-
 	//1. set primitive topology
 	pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	//2. set input layout
-	pDeviceContext->IASetInputLayout(m_pInputLayout); //Different than slides
+	pDeviceContext->IASetInputLayout(m_pInputLayout);
 
 	//3. set vertex buffer
 	constexpr UINT stride = sizeof(Vertex_PosCol);

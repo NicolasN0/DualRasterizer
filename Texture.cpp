@@ -74,26 +74,11 @@ namespace dae
 	ColorRGB Texture::Sample(const Vector2& uv) const
 	{
 		//TODO
-		//Sample the correct texel for the given uv
-		/*if(uv.x < 0 || uv.y < 0)
-		{
-			return ColorRGB{ 0,0,0 };
-		}*/
-		
-		/*int width = uv.x * m_pSurface->w;
-		int height = uv.y * m_pSurface->h;*/
 
-		/*int width = abs(uv.x) * m_pSurface->w;
-		int height = abs(uv.y) * m_pSurface->h;*/
 		int width = std::clamp(abs(uv.x), 0.f, 1.f) * float(m_pSurface->w);
 		int height = std::clamp(abs(uv.y),0.f,1.f) * float(m_pSurface->h);
 
-		//int width =  abs(uv.x) * m_pSurface->w;
-		//int height = abs(uv.y) * m_pSurface->h;
-
-		SDL_Color finalColor;
-
-
+		SDL_Color finalColor{};
 
 		SDL_GetRGB(m_pSurfacePixels[width + height * m_pSurface->w], m_pSurface->format,
 			&finalColor.r,
@@ -102,8 +87,6 @@ namespace dae
 
 		ColorRGB color{ (float)finalColor.r / 255,(float)finalColor.g / 255,(float)finalColor.b / 255 };
 		return (color);
-
-
 
 	}
 }

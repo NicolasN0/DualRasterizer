@@ -72,7 +72,7 @@ namespace dae
         RasterState m_RasterState{};
         Camera* m_pCamera{ nullptr };
 
-        //ColorRGB m_CurColor;
+       
         ColorRGB m_HardwareCol{0.39f,0.59f,0.93f};
         ColorRGB m_SoftCol{0.39f,0.39f,0.39f};
         ColorRGB m_UniformCol{.1f,.1f,.1f};

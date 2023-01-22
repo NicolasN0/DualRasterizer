@@ -18,8 +18,6 @@ namespace dae
 		{
 		}
 
-
-		//Vector3 origin{};
 		float fovAngle{90.f};
 		float fov{ tanf((fovAngle * TO_RADIANS) / 2.f) };
 		
@@ -33,8 +31,7 @@ namespace dae
 		float totalPitch{};
 		float totalYaw{};
 
-	/*	Matrix invViewMatrix{};
-		Matrix viewMatrix{};*/
+
 		Matrix projectionMatrix{};
 
 		float rotspeed{ 0.005f };
@@ -56,7 +53,7 @@ namespace dae
 		void CalculateViewMatrix()
 		{
 			//TODO W1
-		//first obn
+		
 			Vector3 right = Vector3::Cross(up, forward).Normalized();
 			Vector4 rightMatrix{ right,0 };
 			Vector3 up = Vector3::Cross(forward, right).Normalized();
@@ -70,7 +67,6 @@ namespace dae
 			invViewMatrix = obn;
 			viewMatrix = invView;
 			viewMatrix = Matrix::CreateLookAtLH(origin, forward, up);
-			//invViewMatrix = viewMatrix.Inverse();
 			viewMatrix.Inverse();
 			invViewMatrix = viewMatrix;
 			invViewMatrix.Inverse();
@@ -177,15 +173,12 @@ namespace dae
 
 			if (SDL_BUTTON(mouseState) == 16)
 			{
-				//std::cout << pTimer->GetElapsed();
 				origin.y -= mouseY * pTimer->GetElapsed() * 10.f;
 			}
 
 			//RotationMouse
 			if (SDL_BUTTON(mouseState) == 8)
 			{
-
-
 				totalYaw += mouseX * rotspeed;
 				totalPitch -= mouseY * rotspeed;
 			}
@@ -200,7 +193,6 @@ namespace dae
 			rightLocal.Normalize();
 
 			//General
-
 			CalculateViewMatrix();
 			CalculateProjectionMatrix();
 		}
