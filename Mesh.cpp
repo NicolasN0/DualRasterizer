@@ -5,7 +5,7 @@
 
 #include "Effect.h"
 
-Mesh::Mesh(ID3D11Device* pDevice, std::vector<Vertex_PosCol> vertices,std::vector<uint32_t> indices)
+Mesh::Mesh(ID3D11Device* pDevice,const std::vector<Vertex_PosCol>& vertices,std::vector<uint32_t> indices)
 {
 	
 	m_pEffect = new Effect(pDevice, L"Resources/PosCol3D.fx");
@@ -123,6 +123,16 @@ void Mesh::Render(ID3D11DeviceContext* pDeviceContext)
 		m_pEffect->GetTechnique()->GetPassByIndex(p)->Apply(0, pDeviceContext);
 		pDeviceContext->DrawIndexed(m_NumInd, 0, 0);
 	}
+}
+
+void Mesh::SetVertices(const std::vector<Vertex_PosCol>& vertices)
+{
+	m_Vertices = vertices;
+}
+
+void Mesh::SetIndices(const std::vector<uint32_t>& indices)
+{
+	m_Indices = indices;
 }
 
 

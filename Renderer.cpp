@@ -65,8 +65,9 @@ namespace dae {
 		}
 
 		m_pVehicleMesh = new Mesh{ m_pDevice, vertices, indices };
-		m_pVehicleMesh->indices = indices; // for software
-		m_pVehicleMesh->vertices = vertices; // for software
+		m_pVehicleMesh->SetIndices(indices); // for software
+		m_pVehicleMesh->SetVertices(vertices); // for software
+
 		m_TransMatrix = Matrix::CreateTranslation(0, 0, 50);
 		m_RotMatrix = Matrix::CreateRotationZ(0);
 		m_ScaleMatrix = Matrix::CreateScale(1, 1, 1);
@@ -86,8 +87,9 @@ namespace dae {
 			vert2.Color = { 1,1,1 };
 		}
 		m_pCombustionMesh = new Mesh{ m_pDevice, vertices2, indices2 };
-		m_pCombustionMesh->indices = indices2; // for software
-		m_pCombustionMesh->vertices = vertices2; //  for software
+
+		m_pCombustionMesh->SetIndices(indices2); // for software
+		m_pCombustionMesh->SetVertices(vertices2); //  for software
 
 		m_pCombustionMesh->SetWorldMatrix(m_ScaleMatrix * m_RotMatrix * m_TransMatrix);
 		m_pCombustionMesh->m_pEffect->SetMaps(m_pTextureFire);
@@ -691,9 +693,9 @@ namespace dae {
 
 
 	
-		for (int i{}; i < m_pVehicleMesh->indices.size(); i += 3)
+		for (int i{}; i < m_pVehicleMesh->m_Indices.size(); i += 3)
 		{
-			std::vector<Vertex_PosCol> triangle{ m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i]],m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i + 1]],m_pVehicleMesh->vertices[m_pVehicleMesh->indices[i + 2]] };
+			std::vector<Vertex_PosCol> triangle{ m_pVehicleMesh->m_Vertices[m_pVehicleMesh->m_Indices[i]],m_pVehicleMesh->m_Vertices[m_pVehicleMesh->m_Indices[i + 1]],m_pVehicleMesh->m_Vertices[m_pVehicleMesh->m_Indices[i + 2]] };
 
 			std::vector<Vertex_PosColOut> totalVertices;
 			VertexTransformationFunction(triangle, totalVertices, m_pVehicleMesh->m_WorldMatrix);
