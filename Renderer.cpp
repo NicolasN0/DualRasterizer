@@ -713,7 +713,7 @@ namespace dae {
 
 
 
-	void dae::Renderer::RenderTriangle(std::vector<Vertex_PosColOut> newTriangle) const
+	void dae::Renderer::RenderTriangle(std::vector<Vertex_PosColOut>& newTriangle) const
 	{
 
 		Vector2 a = Vector2{ newTriangle[1].Pos.x,newTriangle[1].Pos.y } - Vector2{ newTriangle[0].Pos.x,newTriangle[0].Pos.y };
